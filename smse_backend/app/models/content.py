@@ -4,7 +4,7 @@ from sqlalchemy.orm import validates
 import re
 
 class Content(db.Model):
-    __tablename__ = "content"
+    __tablename__ = "contents"
 
     id = db.Column(db.Integer, primary_key=True)
     content_path = db.Column(db.String(250), unique=True, nullable=False)
