@@ -1,18 +1,35 @@
-from smse_backend.app import db, bcrypt
+from smse_backend.app import db
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy.orm import Relationship
 
-from sqlalchemy.orm import validates
-import re
 
 class Content(db.Model):
     __tablename__ = "contents"
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    content_path = db.Column(db.String(250), unique=True, nullable=False)
-    content_tag = db.Column(db.Boolean, default=True)
-    
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete="CASCADE"), nullable=False, index=True, unique=True)
-    user = db.Relationship("User", back_populates="contents")
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    content_path = Column(String(250), unique=True, nullable=False)
+    content_tag = Column(Boolean, default=True)
 
-    search_records = db.relationship("SearchRecord", back_populates="content", passive_deletes=True)
- 
-    embedding = db.relationship("Embedding", back_populates="content", useList=False, passive_deletes=True)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        unique=True,
+    )
+    user = Relationship("User", back_populates="contents")
+
+    embedding_id = Column(
+        Integer,
+        ForeignKey("embeddings.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        unique=True,
+    )
+    embedding = Relationship(
+        "Embedding", back_populates="content", uselist=False, passive_deletes=True
+    )
+
+    search_records = Relationship(
+        "SearchRecord", back_populates="content", passive_deletes=True
+    )

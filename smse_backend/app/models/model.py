@@ -1,13 +1,13 @@
-from smse_backend.app import db, bcrypt
+from smse_backend.app import db
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import Relationship
 
-from sqlalchemy.orm import validates
-import re
 
 class Model(db.Model):
     __tablename__ = "models"
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    model_name = db.Column(db.String(50), nullable=False)
-    modality = db.Column(db.Integer, nullable=False)
-    
-    embeddings = db.relationship("Embedding", back_populates="model", passive_deletes=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    model_name = Column(String(50), nullable=False)
+    modality = Column(Integer, nullable=False)
+
+    embeddings = Relationship("Embedding", back_populates="model", passive_deletes=True)

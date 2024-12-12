@@ -1,18 +1,35 @@
-from smse_backend.app import db, bcrypt
+from smse_backend.app import db
+from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey
+from sqlalchemy.orm import Relationship
 
-from sqlalchemy.orm import validates
-import re
 
 class Query(db.Model):
     __tablename__ = "queries"
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    query_text = db.Column(db.String(250), nullable=False)
-    timestamp = db.Column(db.DateTime, server_default=db.func.now())
-    
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete="CASCADE"), nullable=False, index=True, unique=True)
-    user = db.Relationship("User", back_populates="queries")
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    text = Column(String(250), nullable=False)
+    timestamp = Column(DateTime, server_default=func.now())
 
-    search_records = db.relationship("SearchRecord", back_populates="query", passive_deletes=True)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        unique=True,
+    )
+    user = Relationship("User", back_populates="queries")
 
-    embedding = db.relationship("Embedding", back_populates="query", useList=False, passive_deletes=True)
+    embedding_id = Column(
+        Integer,
+        ForeignKey("embeddings.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        unique=True,
+    )
+    embedding = Relationship(
+        "Embedding", back_populates="query", uselist=False, passive_deletes=True
+    )
+
+    search_records = Relationship(
+        "SearchRecord", back_populates="query", passive_deletes=True
+    )

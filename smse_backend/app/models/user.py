@@ -2,22 +2,24 @@ from smse_backend.app import db, bcrypt
 
 # from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates
+from sqlalchemy import Column, Integer, String, DateTime, func
+from sqlalchemy.orm import Relationship
+
 import re
 
 
 class User(db.Model):
     __tablename__ = "users"
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(100), unique=True, nullable=False)
-    email = db.Column(db.String(150), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
-    #is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String(100), unique=True, nullable=False)
+    email = Column(String(150), unique=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
 
-    contents = db.relationship("Content", back_populates="user", passive_deletes=True)
-    queries = db.relationship("Query", back_populates="user", passive_deletes=True)
-    
+    contents = Relationship("Content", back_populates="user", passive_deletes=True)
+    queries = Relationship("Query", back_populates="user", passive_deletes=True)
+
     @validates("email")
     def validate_email(self, key, email):
         # Basic email validation
