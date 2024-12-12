@@ -1,9 +1,10 @@
-from smse_backend.app import db
 from sqlalchemy import Column, Float, Integer, DateTime, func, ForeignKey
 from sqlalchemy.orm import Relationship
 
+from smse_backend.app.models.base import BaseModel
 
-class SearchRecord(db.Model):
+
+class SearchRecord(BaseModel):
     __tablename__ = "search_records"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

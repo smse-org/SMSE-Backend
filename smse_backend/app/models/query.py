@@ -1,9 +1,10 @@
-from smse_backend.app import db
 from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey
 from sqlalchemy.orm import Relationship
 
+from smse_backend.app.models.base import BaseModel
 
-class Query(db.Model):
+
+class Query(BaseModel):
     __tablename__ = "queries"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

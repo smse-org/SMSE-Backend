@@ -1,9 +1,9 @@
-from smse_backend.app import db
+from smse_backend.app.models import BaseModel
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
 from sqlalchemy.orm import Relationship
 
 
-class Content(db.Model):
+class Content(BaseModel):
     __tablename__ = "contents"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

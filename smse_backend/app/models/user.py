@@ -1,4 +1,4 @@
-from smse_backend.app import db, bcrypt
+from smse_backend.app import bcrypt
 
 # from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import validates
@@ -7,8 +7,10 @@ from sqlalchemy.orm import Relationship
 
 import re
 
+from smse_backend.app.models.base import BaseModel
 
-class User(db.Model):
+
+class User(BaseModel):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
