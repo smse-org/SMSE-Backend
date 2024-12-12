@@ -9,11 +9,7 @@ app = create_app()
 def main():
     # Ensure database is created
     with app.app_context():
-        # db.session.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-
-        # @event.listens_for(db.engine, "connect")
-        # def connect(dbapi_connection, connection_record):
-        #     register_vector(dbapi_connection)
+        db.session.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
 
         db.create_all()
 
