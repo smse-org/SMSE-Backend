@@ -32,10 +32,8 @@ def create_app(config_name="development"):
     jwt.init_app(app)
 
     # Register blueprints
-    from smse_backend.app.routes import auth_bp, main_bp, upload_bp
+    from smse_backend.app.routes import register_blueprints
 
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(main_bp)
-    app.register_blueprint(upload_bp)
+    register_blueprints(app)
 
     return app

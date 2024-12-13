@@ -1,3 +1,6 @@
-from .auth import auth_bp
-from .main import main_bp
-from .file_upload import upload_bp
+from .v1 import v1_bp
+
+
+def register_blueprints(app):
+    """Register all blueprints with the Flask app."""
+    app.register_blueprint(v1_bp)
