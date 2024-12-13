@@ -7,12 +7,6 @@ app = create_app()
 
 
 def main():
-    # Ensure database is created
-    with app.app_context():
-        db.session.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-
-        db.create_all()
-
     # Run the application
     app.run(debug=True)
 
