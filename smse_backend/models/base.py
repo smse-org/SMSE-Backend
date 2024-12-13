@@ -1,5 +1,5 @@
 from sqlalchemy.orm import declarative_base
-from smse_backend.app import db
+from smse_backend import db
 
 Base = declarative_base()
 Base.metadata = db.metadata

@@ -1,15 +1,14 @@
-from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey
+from smse_backend.models import BaseModel
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
 from sqlalchemy.orm import Relationship
 
-from smse_backend.app.models.base import BaseModel
 
-
-class Query(BaseModel):
-    __tablename__ = "queries"
+class Content(BaseModel):
+    __tablename__ = "contents"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    text = Column(String(250), nullable=False)
-    timestamp = Column(DateTime, server_default=func.now())
+    content_path = Column(String(250), unique=True, nullable=False)
+    content_tag = Column(Boolean, default=True)
 
     user_id = Column(
         Integer,
@@ -18,7 +17,7 @@ class Query(BaseModel):
         index=True,
         unique=True,
     )
-    user = Relationship("User", back_populates="queries")
+    user = Relationship("User", back_populates="contents")
 
     embedding_id = Column(
         Integer,
@@ -28,9 +27,9 @@ class Query(BaseModel):
         unique=True,
     )
     embedding = Relationship(
-        "Embedding", back_populates="query", uselist=False, passive_deletes=True
+        "Embedding", back_populates="content", uselist=False, passive_deletes=True
     )
 
     search_records = Relationship(
-        "SearchRecord", back_populates="query", passive_deletes=True
+        "SearchRecord", back_populates="content", passive_deletes=True
     )

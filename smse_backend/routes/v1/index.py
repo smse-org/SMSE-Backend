@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from smse_backend.app.models import User
+from smse_backend.models import User
 
 # Create a blueprint for main routes
 main_bp = Blueprint("main", __name__)

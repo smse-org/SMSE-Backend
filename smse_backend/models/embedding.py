@@ -1,8 +1,7 @@
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import Column, Integer, ForeignKey
 from sqlalchemy.orm import Relationship, mapped_column
-
-from smse_backend.app.models.base import BaseModel
+from smse_backend.models.base import BaseModel
 
 
 class Embedding(BaseModel):

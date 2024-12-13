@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Float, Integer, DateTime, func, ForeignKey
 from sqlalchemy.orm import Relationship
-
-from smse_backend.app.models.base import BaseModel
+from smse_backend.models.base import BaseModel
 
 
 class SearchRecord(BaseModel):

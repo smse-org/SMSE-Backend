@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import Relationship
-
-from smse_backend.app.models.base import BaseModel
+from smse_backend.models.base import BaseModel
 
 
 class Model(BaseModel):

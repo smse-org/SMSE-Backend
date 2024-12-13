@@ -1,13 +1,10 @@
-from smse_backend.app import bcrypt
-
-# from flask_sqlalchemy import SQLAlchemy
+from smse_backend import bcrypt
 from sqlalchemy.orm import validates
 from sqlalchemy import Column, Integer, String, DateTime, func
 from sqlalchemy.orm import Relationship
+from smse_backend.models.base import BaseModel
 
 import re
-
-from smse_backend.app.models.base import BaseModel
 
 
 class User(BaseModel):

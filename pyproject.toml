@@ -23,4 +23,4 @@ build-backend = "poetry.core.masonry.api"
 
 # add entry point
 [tool.poetry.scripts]
-smse-backend = "smse_backend.app.run:main"
+smse-backend = "smse_backend.app:main"

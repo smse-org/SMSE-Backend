@@ -1,4 +1,4 @@
-from smse_backend.app import create_app, db
+from smse_backend import create_app, db
 from sqlalchemy import text
 from sqlalchemy import event
 from pgvector.psycopg2 import register_vector
