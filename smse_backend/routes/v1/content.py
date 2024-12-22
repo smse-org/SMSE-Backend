@@ -57,7 +57,7 @@ def create_content():
                 201,
             )
 
-        except Exception as e:
+        except Exception as _:
             db.session.rollback()
             return jsonify({"message": "Error creating content"}), 500
 
@@ -140,7 +140,7 @@ def update_content(content_id):
             200,
         )
 
-    except Exception as e:
+    except Exception as _:
         db.session.rollback()
         return jsonify({"message": "Error updating content"}), 500
 
@@ -164,7 +164,7 @@ def delete_content(content_id):
         db.session.commit()
         return jsonify({"message": "Content deleted successfully"}), 200
 
-    except Exception as e:
+    except Exception as _:
         db.session.rollback()
         return jsonify({"message": "Error deleting content"}), 500
 

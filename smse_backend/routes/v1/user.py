@@ -62,7 +62,7 @@ def update_user():
                 },
             }
         )
-    except Exception as e:
+    except Exception as _:
         db.session.rollback()
         return jsonify({"message": "Error updating user"}), 500
 
@@ -80,6 +80,6 @@ def delete_user():
         db.session.delete(user)
         db.session.commit()
         return jsonify({"message": "User deleted successfully"}), 200
-    except Exception as e:
+    except Exception as _:
         db.session.rollback()
         return jsonify({"message": "Error deleting user"}), 500
