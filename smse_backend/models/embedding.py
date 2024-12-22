@@ -18,6 +18,6 @@ class Embedding(BaseModel):
         ForeignKey("models.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
-        unique=True,
+        unique=False,
     )
     model = Relationship("Model", back_populates="embeddings")
