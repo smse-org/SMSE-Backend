@@ -3,7 +3,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
-from smse_backend.routes import register_blueprints
 import os
 
 # Initialize extensions
@@ -33,6 +32,8 @@ def create_app(config_name="development"):
     jwt.init_app(app)
 
     # Register blueprints
+    from smse_backend.routes import register_blueprints
+
     register_blueprints(app)
 
     return app
