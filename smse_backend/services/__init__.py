@@ -1,0 +1,1 @@
+from .embedding import create_embedding_from_path
