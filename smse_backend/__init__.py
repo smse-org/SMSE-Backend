@@ -12,15 +12,21 @@ bcrypt = Bcrypt()
 jwt = JWTManager()
 
 
-def create_app(config_name="development"):
+def create_app(config_name="DevelopmentConfig"):
     # Create Flask app
     app = Flask(__name__)
 
     # Load configuration
-    if config_name == "development":
+    if config_name == "DevelopmentConfig":
         from smse_backend.config.development import DevelopmentConfig
 
-        app.config.from_object(DevelopmentConfig)
+        config = DevelopmentConfig
+    elif config_name == "TestConfig":
+        from smse_backend.config.test import TestConfig
+
+        config = TestConfig
+
+    app.config.from_object(config)
 
     # Ensure upload directory exists
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
