@@ -25,6 +25,10 @@ def create_app(config_name="DevelopmentConfig"):
         from smse_backend.config.test import TestConfig
 
         config = TestConfig
+    elif config_name == "ProductionConfig":
+        from smse_backend.config.production import ProductionConfig
+
+        config = ProductionConfig
 
     app.config.from_object(config)
 
