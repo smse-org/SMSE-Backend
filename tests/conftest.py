@@ -2,9 +2,15 @@ import pytest
 from smse_backend import create_app, db
 
 
-@pytest.fixture()
-def setup_database():
+@pytest.fixture
+def app():
+    """Create and configure a new app instance for each test."""
     app = create_app("TestConfig")
+    return app
+
+
+@pytest.fixture()
+def setup_database(app):
     with app.app_context():
         db.create_all()  # Create schema once for the test session
         yield db

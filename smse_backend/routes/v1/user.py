@@ -10,7 +10,7 @@ user_bp = Blueprint("user", __name__)
 @jwt_required()
 def get_user():
     current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
+    user = db.session.get(User, current_user_id)
 
     if not user:
         return jsonify({"message": "User not found"}), 404
@@ -29,7 +29,7 @@ def get_user():
 @jwt_required()
 def update_user():
     current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
+    user = db.session.get(User, current_user_id)
 
     if not user:
         return jsonify({"message": "User not found"}), 404
@@ -71,7 +71,7 @@ def update_user():
 @jwt_required()
 def delete_user():
     current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
+    user = db.session.get(User, current_user_id)
 
     if not user:
         return jsonify({"message": "User not found"}), 404
