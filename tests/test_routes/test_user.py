@@ -22,7 +22,7 @@ def auth_header(client, sample_user):
 
 def test_get_user(client, auth_header, sample_user):
     """Test the GET /users/me route."""
-    response = client.get("/v1/users/me", headers=auth_header)
+    response = client.get("/api/v1/users/me", headers=auth_header)
     assert response.status_code == 200
     assert response.json["id"] == sample_user.id
     assert response.json["username"] == sample_user.username
@@ -34,7 +34,7 @@ def test_update_user(client, auth_header, sample_user):
     new_username = "updateduser"
     new_email = "updateduser@test.com"
     response = client.put(
-        "/v1/users/me",
+        "/api/v1/users/me",
         headers=auth_header,
         json={"username": new_username, "email": new_email},
     )
@@ -51,7 +51,7 @@ def test_update_user_existing_username(client, auth_header, sample_user, db_sess
     db_session.commit()
 
     response = client.put(
-        "/v1/users/me",
+        "/api/v1/users/me",
         headers=auth_header,
         json={"username": "existinguser"},
     )
@@ -67,7 +67,7 @@ def test_update_user_existing_email(client, auth_header, sample_user, db_session
     db_session.commit()
 
     response = client.put(
-        "/v1/users/me",
+        "/api/v1/users/me",
         headers=auth_header,
         json={"email": "existinguser2@test.com"},
     )
@@ -77,7 +77,7 @@ def test_update_user_existing_email(client, auth_header, sample_user, db_session
 
 def test_delete_user(client, auth_header, sample_user, db_session):
     """Test the DELETE /users/me route."""
-    response = client.delete("/v1/users/me", headers=auth_header)
+    response = client.delete("/api/v1/users/me", headers=auth_header)
 
     assert response.status_code == 200
     assert response.json["message"] == "User deleted successfully"

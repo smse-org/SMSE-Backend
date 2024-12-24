@@ -20,7 +20,7 @@ def get_user():
             "id": user.id,
             "username": user.username,
             "email": user.email,
-            "created_at": str(user.created_at),
+            "created_at": user.created_at.strftime("%Y-%m-%d %H:%M:%S"),
         }
     )
 
