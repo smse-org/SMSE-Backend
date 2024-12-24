@@ -1,10 +1,10 @@
 from flask import Blueprint, jsonify
 
 # Create a blueprint for main routes
-main_bp = Blueprint("main", __name__)
+index_bp = Blueprint("index", __name__)
 
 
-@main_bp.route("/health", methods=["GET"])
+@index_bp.route("/health", methods=["GET"])
 def health_check():
     """
     Simple health check endpoint
