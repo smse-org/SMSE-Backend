@@ -27,32 +27,187 @@ If you made changes to the models, you need to run `flask db migrate` to generat
 
 ## Endpoints
 
-### Auth
+### Auth Endpoints
 
-- POST /auth/login
-- POST /auth/register
+#### Register
 
-```Bash
-# Register a new user
-curl -X POST http://localhost:5000/v1/register \
-     -H "Content-Type: application/json" \
-     -d '{"username":"johndoe", "email":"john@example.com", "password":"securepass123"}'
+- **URL:** `/auth/register`
+- **Method:** `POST`
+- **Description:** Register a new user.
+- **Request Body:**
+  ```json
+  {
+    "username": "string",
+    "email": "string",
+    "password": "string"
+  }
+  ```
+- **Responses:**
+  - `201 Created`: User created successfully.
+    ```json
+    {
+      "msg": "User created successfully"
+    }
+    ```
+  - `400 Bad Request`: Missing required fields or user already exists.
+    ```json
+    {
+      "msg": "Missing required fields"
+    }
+    ```
+    ```json
+    {
+      "msg": "Username already exists"
+    }
+    ```
+    ```json
+    {
+      "msg": "Email already exists"
+    }
+    ```
 
-# Login and get JWT token
-LOGIN_RESPONSE=$(curl -X POST http://localhost:5000/v1/login \
-     -H "Content-Type: application/json" \
-     -d '{"username":"johndoe", "password":"securepass123"}')
+#### Login
 
-# Extract token (requires jq for JSON parsing)
-TOKEN=$(echo $LOGIN_RESPONSE | jq -r .access_token)
-```
+- **URL:** `/auth/login`
+- **Method:** `POST`
+- **Description:** Login a user and get a JWT token.
+- **Request Body:**
+  ```json
+  {
+    "username": "string",
+    "password": "string"
+  }
+  ```
+- **Responses:**
+  - `200 OK`: Login successful, returns JWT token.
+    ```json
+    {
+      "access_token": "string"
+    }
+    ```
+  - `401 Unauthorized`: Invalid credentials.
+    ```json
+    {
+      "msg": "Invalid credentials"
+    }
+    ```
 
-### File Upload
+#### Protected
 
-- POST /upload
+- **URL:** `/auth/protected`
+- **Method:** `GET`
+- **Description:** A protected route that requires a valid JWT token.
+- **Headers:**
+  ```http
+  Authorization: Bearer <JWT_TOKEN>
+  ```
+- **Responses:**
+  - `200 OK`: Returns the username of the authenticated user.
+    ```json
+    {
+      "username": "string"
+    }
+    ```
 
-```Bash
-curl -X POST http://localhost:5000/v1/upload \
-     -H "Authorization: Bearer $TOKEN" \
-     -F "file=@/path/to/your/file.txt"
-```
+### User Endpoints
+
+#### Get User
+
+- **URL:** `/users/me`
+- **Method:** `GET`
+- **Description:** Get the details of the authenticated user.
+- **Headers:**
+  ```http
+  Authorization: Bearer <JWT_TOKEN>
+  ```
+- **Responses:**
+  - `200 OK`: Returns the user details.
+    ```json
+    {
+      "id": "integer",
+      "username": "string",
+      "email": "string",
+      "created_at": "string"
+    }
+    ```
+  - `404 Not Found`: User not found.
+    ```json
+    {
+      "message": "User not found"
+    }
+    ```
+
+#### Update User
+
+- **URL:** `/users/me`
+- **Method:** `PUT`
+- **Description:** Update the details of the authenticated user.
+- **Headers:**
+  ```http
+  Authorization: Bearer <JWT_TOKEN>
+  ```
+- **Request Body:**
+  ```json
+  {
+    "username": "string",
+    "email": "string"
+  }
+  ```
+- **Responses:**
+  - `200 OK`: User updated successfully.
+    ```json
+    {
+      "message": "User updated successfully",
+      "user": {
+        "id": "integer",
+        "username": "string",
+        "email": "string",
+        "created_at": "string"
+      }
+    }
+    ```
+  - `400 Bad Request`: Username or email already exists, or invalid email format.
+    ```json
+    {
+      "message": "Username already exists"
+    }
+    ```
+    ```json
+    {
+      "message": "Email already exists"
+    }
+    ```
+    ```json
+    {
+      "message": "Invalid email address"
+    }
+    ```
+  - `404 Not Found`: User not found.
+    ```json
+    {
+      "message": "User not found"
+    }
+    ```
+
+#### Delete User
+
+- **URL:** `/users/me`
+- **Method:** `DELETE`
+- **Description:** Delete the authenticated user.
+- **Headers:**
+  ```http
+  Authorization: Bearer <JWT_TOKEN>
+  ```
+- **Responses:**
+  - `200 OK`: User deleted successfully.
+    ```json
+    {
+      "message": "User deleted successfully"
+    }
+    ```
+  - `404 Not Found`: User not found.
+    ```json
+    {
+      "message": "User not found"
+    }
+    ```
