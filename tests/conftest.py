@@ -19,14 +19,14 @@ def setup_database(app):
 
 
 @pytest.fixture
-def client(app):
-    """A test client for the app."""
-    return app.test_client()
-
-
-@pytest.fixture
 def db_session(setup_database):
     """Provide a clean database session for each test."""
     db.session.begin_nested()  # Use a nested transaction
     yield db.session
     db.session.rollback()  # Rollback after each test
+
+
+@pytest.fixture
+def client(app, db_session):
+    """A test client for the app."""
+    return app.test_client()

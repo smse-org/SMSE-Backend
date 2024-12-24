@@ -31,7 +31,7 @@ If you made changes to the models, you need to run `flask db migrate` to generat
 
 #### Register
 
-- **URL:** `/auth/register`
+- **URL:** `/api/v1/auth/register`
 - **Method:** `POST`
 - **Description:** Register a new user.
 - **Request Body:**
@@ -68,7 +68,7 @@ If you made changes to the models, you need to run `flask db migrate` to generat
 
 #### Login
 
-- **URL:** `/auth/login`
+- **URL:** `/api/v1/auth/login`
 - **Method:** `POST`
 - **Description:** Login a user and get a JWT token.
 - **Request Body:**
@@ -94,7 +94,7 @@ If you made changes to the models, you need to run `flask db migrate` to generat
 
 #### Protected
 
-- **URL:** `/auth/protected`
+- **URL:** `/api/v1/auth/protected`
 - **Method:** `GET`
 - **Description:** A protected route that requires a valid JWT token.
 - **Headers:**
@@ -113,7 +113,7 @@ If you made changes to the models, you need to run `flask db migrate` to generat
 
 #### Get User
 
-- **URL:** `/users/me`
+- **URL:** `/api/v1/users/me`
 - **Method:** `GET`
 - **Description:** Get the details of the authenticated user.
 - **Headers:**
@@ -139,7 +139,7 @@ If you made changes to the models, you need to run `flask db migrate` to generat
 
 #### Update User
 
-- **URL:** `/users/me`
+- **URL:** `/api/v1/users/me`
 - **Method:** `PUT`
 - **Description:** Update the details of the authenticated user.
 - **Headers:**
@@ -191,7 +191,7 @@ If you made changes to the models, you need to run `flask db migrate` to generat
 
 #### Delete User
 
-- **URL:** `/users/me`
+- **URL:** `/api/v1/users/me`
 - **Method:** `DELETE`
 - **Description:** Delete the authenticated user.
 - **Headers:**
@@ -216,7 +216,7 @@ If you made changes to the models, you need to run `flask db migrate` to generat
 
 #### Create Content
 
-- **URL:** `/contents`
+- **URL:** `/api/v1/contents`
 - **Method:** `POST`
 - **Description:** Upload a new content file.
 - **Headers:**
@@ -262,7 +262,7 @@ If you made changes to the models, you need to run `flask db migrate` to generat
 
 #### Get All Contents
 
-- **URL:** `/contents`
+- **URL:** `/api/v1/contents`
 - **Method:** `GET`
 - **Description:** Get all contents for the authenticated user.
 - **Headers:**
@@ -285,7 +285,7 @@ If you made changes to the models, you need to run `flask db migrate` to generat
 
 #### Get Content
 
-- **URL:** `/contents/<int:content_id>`
+- **URL:** `/api/v1/contents/<int:content_id>`
 - **Method:** `GET`
 - **Description:** Get a specific content by its ID.
 - **Headers:**
@@ -312,7 +312,7 @@ If you made changes to the models, you need to run `flask db migrate` to generat
 
 #### Update Content
 
-- **URL:** `/contents/<int:content_id>`
+- **URL:** `/api/v1/contents/<int:content_id>`
 - **Method:** `PUT`
 - **Description:** Update a specific content by its ID.
 - **Headers:**
@@ -352,7 +352,7 @@ If you made changes to the models, you need to run `flask db migrate` to generat
 
 #### Delete Content
 
-- **URL:** `/contents/<int:content_id>`
+- **URL:** `/api/v1/contents/<int:content_id>`
 - **Method:** `DELETE`
 - **Description:** Delete a specific content by its ID.
 - **Headers:**
@@ -381,7 +381,7 @@ If you made changes to the models, you need to run `flask db migrate` to generat
 
 #### Download Content
 
-- **URL:** `/contents/<int:content_id>/download`
+- **URL:** `/api/v1/contents/<int:content_id>/download`
 - **Method:** `GET`
 - **Description:** Download a specific content file by its ID.
 - **Headers:**
@@ -404,7 +404,7 @@ If you made changes to the models, you need to run `flask db migrate` to generat
 
 #### Get Allowed Extensions
 
-- **URL:** `/contents/allowed_extensions`
+- **URL:** `/api/v1/contents/allowed_extensions`
 - **Method:** `GET`
 - **Description:** Get the list of allowed file extensions for content uploads.
 - **Responses:**
