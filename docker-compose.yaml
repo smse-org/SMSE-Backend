@@ -32,5 +32,13 @@ services:
     env_file:
       - .env
 
+  migrate:
+    build: .
+    command: ["poetry", "run", "flask", "db", "upgrade"]
+    depends_on:
+      - db
+    env_file:
+      - .env
+
 volumes:
   db_data:
