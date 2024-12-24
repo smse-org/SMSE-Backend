@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from smse_backend import db
@@ -216,3 +216,27 @@ def delete_content(content_id):
 @content_bp.route("/contents/allowed_extensions", methods=["GET"])
 def get_allowed_extensions():
     return jsonify({"allowed_extensions": list(ALLOWED_EXTENSIONS)}), 200
+
+
+@content_bp.route("/contents/<int:content_id>/download", methods=["GET"])
+@jwt_required()
+def download_content(content_id):
+    """
+    Download a specific content file by its ID for the current user.
+
+    Args:
+        content_id (int): The ID of the content to download.
+
+    Returns:
+        Response: File response containing the content file or an error message.
+    """
+    current_user_id = get_jwt_identity()
+    content = Content.query.filter_by(id=content_id, user_id=current_user_id).first()
+
+    if not content:
+        return jsonify({"message": "Content not found"}), 404
+
+    if not os.path.exists(content.content_path):
+        return jsonify({"message": "File not found"}), 404
+
+    return send_file(content.content_path, as_attachment=True)

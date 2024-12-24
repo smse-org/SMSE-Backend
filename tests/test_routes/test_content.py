@@ -1,5 +1,7 @@
+from unittest.mock import MagicMock
 import numpy as np
 import pytest
+import smse_backend
 from smse_backend.models import Content, Embedding, Model, User
 from flask_jwt_extended import create_access_token
 from io import BytesIO
@@ -73,8 +75,6 @@ def test_create_content(client, auth_header, sample_user, sample_model, monkeypa
         content_type="multipart/form-data",
     )
 
-    print(response.json)
-
     assert response.status_code == 201
     assert response.json["message"] == "Content created successfully"
 
@@ -118,3 +118,27 @@ def test_get_allowed_extensions(client):
     response = client.get("/api/v1/contents/allowed_extensions")
     assert response.status_code == 200
     assert "txt" in response.json["allowed_extensions"]
+
+
+def test_download_content(client, auth_header, sample_content, monkeypatch):
+    """Test the GET /contents/<int:content_id>/download route."""
+
+    mock_send_file = MagicMock(
+        return_value=sample_content.content_path,
+    )
+
+    def mock_os_path_exists(path):
+        return path == sample_content.content_path
+
+    monkeypatch.setattr("os.path.exists", mock_os_path_exists)
+    monkeypatch.setattr("smse_backend.routes.v1.content.send_file", mock_send_file)
+
+    response = client.get(
+        f"/api/v1/contents/{sample_content.id}/download", headers=auth_header
+    )
+
+    mock_send_file.assert_called_once_with(
+        sample_content.content_path, as_attachment=True
+    )
+    assert response.status_code == 200
+    assert response.data.decode() == sample_content.content_path
