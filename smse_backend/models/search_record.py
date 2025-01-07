@@ -15,7 +15,7 @@ class SearchRecord(BaseModel):
         ForeignKey("contents.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
-        unique=True,
+        unique=False,
     )
     content = Relationship("Content", back_populates="search_records")
 
@@ -26,4 +26,4 @@ class SearchRecord(BaseModel):
         index=True,
         unique=True,
     )
-    query = Relationship("Query", back_populates="search_records")
+    query_relation = Relationship("Query", back_populates="search_records")
