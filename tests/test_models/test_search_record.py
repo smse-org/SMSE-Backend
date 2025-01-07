@@ -100,7 +100,7 @@ def test_search_record_query_relationship(db_session, sample_content, sample_que
     db_session.add(search_record)
     db_session.commit()
 
-    assert search_record.query == sample_query
+    assert search_record.query_relation == sample_query
     assert search_record in sample_query.search_records
 
 
