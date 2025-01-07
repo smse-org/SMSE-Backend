@@ -92,6 +92,59 @@ If you made changes to the models, you need to run `flask db migrate` to generat
     }
     ```
 
+#### Refresh
+
+- **URL:** `/api/v1/auth/refresh`
+- **Method:** `POST`
+- **Description:** Refresh a JWT token.
+- **Headers:**
+  ```http
+  Authorization: Bearer <JWT_REFRESH_TOKEN>
+  ```
+- **Responses:**
+  - `200 OK`: Token refreshed successfully.
+    ```json
+    {
+      "access_token": "string"
+    }
+    ```
+  - `401 Unauthorized`: Token expired or invalid.
+    ```json
+    {
+      "msg": "Token has expired"
+    }
+    ```
+    ```json
+    {
+      "msg": "Invalid token"
+    }
+    ```
+
+
+#### Logout
+
+- **URL:** `/api/v1/auth/logout`
+- **Method:** `POST`
+- **Description:** Logout a user and revoke the JWT token.
+- **Headers:**
+  ```http
+  Authorization: Bearer <JWT_TOKEN>
+  ```
+- **Responses:**
+  - `200 OK`: Logout successful.
+    ```json
+    {
+      "msg": "Logout successful"
+    }
+    ```
+  - `401 Unauthorized`: Invalid token.
+    ```json
+    {
+      "msg": "Invalid token"
+    }
+    ```
+
+
 #### Protected
 
 - **URL:** `/api/v1/auth/protected`
@@ -412,5 +465,127 @@ If you made changes to the models, you need to run `flask db migrate` to generat
     ```json
     {
       "allowed_extensions": ["string"]
+    }
+    ```
+
+### Search Endpoints
+
+#### Search Files
+
+- **URL:** `/api/v1/search`
+- **Method:** `POST`
+- **Description:** Search for files based on a query.
+- **Headers:**
+  ```http
+  Authorization: Bearer <JWT_TOKEN>
+  ```
+- **Request Body:**
+  ```json
+  {
+    "query": "string"
+  }
+  ```
+- **Responses:**
+  - `201 Created`: Search completed successfully.
+    ```json
+    {
+      "message": "Search completed successfully",
+      "query_id": "integer",
+      "results": [
+        {
+          "content_id": "integer",
+          "similarity_score": "float"
+        }
+      ]
+    }
+    ```
+  - `400 Bad Request`: Query text is required.
+    ```json
+    {
+      "message": "Query text is required"
+    }
+    ```
+  - `500 Internal Server Error`: Error creating embedding for query.
+    ```json
+    {
+      "message": "Error creating embedding for query"
+    }
+    ```
+
+#### Get Query History
+
+- **URL:** `/api/v1/queries`
+- **Method:** `GET`
+- **Description:** Get the search query history for the authenticated user.
+- **Headers:**
+  ```http
+  Authorization: Bearer <JWT_TOKEN>
+  ```
+- **Responses:**
+  - `200 OK`: Returns a list of queries.
+    ```json
+    [
+      {
+        "id": "integer",
+        "text": "string",
+        "timestamp": "string"
+      }
+    ]
+    ```
+
+#### Get Search Results History
+
+- **URL:** `/api/v1/searches/<int:query_id>`
+- **Method:** `GET`
+- **Description:** Get the search results history for a specific query.
+- **Headers:**
+  ```http
+  Authorization: Bearer <JWT_TOKEN>
+  ```
+- **Responses:**
+  - `200 OK`: Returns the query details and search results.
+    ```json
+    {
+      "query": {
+        "id": "integer",
+        "text": "string",
+        "timestamp": "string"
+      },
+      "results": [
+        {
+          "content_id": "integer",
+          "similarity_score": "float",
+          "retrieved_at": "string"
+        }
+      ]
+    }
+    ```
+  - `404 Not Found`: Query not found.
+    ```json
+    {
+      "message": "Query not found"
+    }
+    ```
+
+#### Delete Query
+
+- **URL:** `/api/v1/queries/<int:query_id>`
+- **Method:** `DELETE`
+- **Description:** Delete a specific query by its ID.
+- **Headers:**
+  ```http
+  Authorization: Bearer <JWT_TOKEN>
+  ```
+- **Responses:**
+  - `200 OK`: Query deleted successfully.
+    ```json
+    {
+      "message": "Query deleted successfully"
+    }
+    ```
+  - `404 Not Found`: Query not found.
+    ```json
+    {
+      "message": "Query not found"
     }
     ```
