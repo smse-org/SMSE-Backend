@@ -31,5 +31,5 @@ class Query(BaseModel):
     )
 
     search_records = Relationship(
-        "SearchRecord", back_populates="query", passive_deletes=True
+        "SearchRecord", back_populates="query_relation", passive_deletes=True
     )
