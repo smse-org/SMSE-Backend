@@ -1,5 +1,11 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import (
+    create_access_token,
+    create_refresh_token,
+    jwt_required,
+    get_jwt_identity,
+    unset_jwt_cookies,
+)
 from smse_backend import db
 from smse_backend.models import User
 
@@ -44,9 +50,25 @@ def login():
 
     if user and user.check_password(data.get("password")):
         access_token = create_access_token(identity=str(user.id))
-        return jsonify(access_token=access_token), 200
+        refresh_token = create_refresh_token(identity=str(user.id))
+        return jsonify(access_token=access_token, refresh_token=refresh_token), 200
 
     return jsonify({"msg": "Invalid credentials"}), 401
+
+
+@auth_bp.route("/refresh", methods=["POST"])
+@jwt_required(refresh=True)
+def refresh():
+    identity = get_jwt_identity()
+    access_token = create_access_token(identity=identity)
+    return jsonify(access_token=access_token)
+
+
+@auth_bp.route("/logout", methods=["POST"])
+def logout():
+    response = jsonify({"msg": "logout successful"})
+    unset_jwt_cookies(response)
+    return response
 
 
 @auth_bp.route("/protected", methods=["GET"])
