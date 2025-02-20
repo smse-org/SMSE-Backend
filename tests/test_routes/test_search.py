@@ -91,19 +91,21 @@ def test_search_files(
     def mock_search(query_embedding):
         return [
             {"content_id": 1, "similarity_score": 0.95},
-            # {"content_id": 2, "similarity_score": 0.85},
+            {"content_id": 2, "similarity_score": 0.85},
         ]
 
     monkeypatch.setattr("smse_backend.services.create_embedding", mock_create_embedding)
-    monkeypatch.setattr("smse_backend.services.search", mock_search)
+    monkeypatch.setattr("smse_backend.routes.v1.search", mock_search)
 
     data = {"query": "sample query"}
     response = client.post("/api/v1/search", headers=auth_header, json=data)
 
+    print(response.json["results"])
+
     assert response.status_code == 201
     assert response.json["message"] == "Search completed successfully"
     assert "query_id" in response.json
-    assert len(response.json["results"]) == 1
+    assert len(response.json["results"]) == 2
 
 
 def test_get_query_history(client, auth_header, sample_query):
