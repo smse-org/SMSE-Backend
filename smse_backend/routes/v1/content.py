@@ -18,6 +18,12 @@ def allowed_file(filename):
     """Check if file extension is allowed"""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def get_first_directory(path):
+    parts = path.lstrip(os.sep).split(os.sep)  # Remove leading slashes & split
+    return parts[0] if parts else None  # Return first part if exists
+
+def get_full_path(file_path):
+    return os.path.join(current_app.config["UPLOAD_FOLDER"], file_path)
 
 @content_bp.route("/contents", methods=["POST"])
 @jwt_required()
@@ -32,19 +38,12 @@ def create_content():
     if file.filename == "":
         return jsonify({"msg": "No selected file"}), 400
 
-    if file and allowed_file(file.filename):
-        # Create user-specific upload directory
-        user_upload_dir = os.path.join(
-            current_app.config["UPLOAD_FOLDER"], str(current_user_id)
-        )
-        os.makedirs(user_upload_dir, exist_ok=True)
-
+    if file and allowed_file(file.filename):        
         # Secure the filename and add a random UUID
-        # TODO: Handle duplicate files (content)
         filename = secure_filename(file.filename)
         unique_filename = f"{uuid.uuid4().hex}_{filename}"
-        file_path = os.path.join(user_upload_dir, unique_filename)
-        file.save(file_path)
+        file_path = os.path.join(str(current_user_id), unique_filename)
+        file.save(get_full_path(file_path))
 
         try:
             # Get user chosen model
@@ -53,7 +52,7 @@ def create_content():
             ).id  # TODO: Allow user to choose model (handle user settings)
 
             # Create embedding vector from content
-            embedding_vector = create_embedding_from_path(file_path)
+            embedding_vector = create_embedding_from_path(get_full_path(file_path))
             if embedding_vector is None:
                 return jsonify({"message": "Error creating embedding for content"}), 500
 
@@ -198,8 +197,8 @@ def delete_content(content_id):
 
     try:
         # Delete the actual file
-        if os.path.exists(content.content_path):
-            os.remove(content.content_path)
+        if os.path.exists(get_full_path(content.content_path)):
+            os.remove(get_full_path(content.content_path))
         else:
             print("The file does not exist")  # TODO: Log this
 
@@ -220,7 +219,7 @@ def get_allowed_extensions():
 
 @content_bp.route("/contents/<int:content_id>/download", methods=["GET"])
 @jwt_required()
-def download_content(content_id):
+def download_content_by_id(content_id):
     """
     Download a specific content file by its ID for the current user.
 
@@ -236,7 +235,37 @@ def download_content(content_id):
     if not content:
         return jsonify({"message": "Content not found"}), 404
 
-    if not os.path.exists(content.content_path):
+    if not os.path.exists(get_full_path(content.content_path)):
         return jsonify({"message": "File not found"}), 404
 
-    return send_file(content.content_path, as_attachment=True)
+    return send_file(get_full_path(content.content_path), as_attachment=True)
+
+
+@content_bp.route("/uploads/<file_path>", methods=["GET"])
+@jwt_required()
+def download_content_by_path(file_path):
+    """
+    Download a specific content file using its path for the current user.
+
+    Query Params:
+        file_path (str): The full path of the content to download.
+
+    Returns:
+        Response: File response containing the content file or an error message.
+    """
+    print("form API")
+    current_user_id = get_jwt_identity()
+    
+    if not file_path:
+        return jsonify({"message": "File path is required"}), 400
+
+    if get_first_directory(file_path) != current_user_id:
+        return jsonify({"message": "Unauthorized access"}), 403
+
+    # Ensure the file exists
+    if not os.path.exists(get_full_path(file_path)):
+        print(get_full_path(file_path))
+        print("saed")
+        return jsonify({"message": "File not found"}), 404
+        
+    return send_file(get_full_path(file_path), as_attachment=True)
