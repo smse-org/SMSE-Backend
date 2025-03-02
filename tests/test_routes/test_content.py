@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock
 import numpy as np
 import pytest
-import smse_backend
 from smse_backend.models import Content, Embedding, Model, User
 from flask_jwt_extended import create_access_token
 from io import BytesIO

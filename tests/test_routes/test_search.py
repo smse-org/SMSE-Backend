@@ -1,7 +1,6 @@
 import pytest
 from flask_jwt_extended import create_access_token
 from smse_backend.models import Query, SearchRecord, User, Content, Embedding, Model
-from io import BytesIO
 import numpy as np
 
 
