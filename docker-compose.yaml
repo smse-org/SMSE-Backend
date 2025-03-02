@@ -10,6 +10,8 @@ services:
       - "${DATABASE_PORT}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    profiles:
+      - default
 
   pgadmin:
     image: dpage/pgadmin4
@@ -21,6 +23,8 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
+    profiles:
+      - default
 
   web:
     build: .
@@ -31,6 +35,8 @@ services:
       - db
     env_file:
       - .env
+    profiles:
+      - default
 
   migrate:
     build: .
@@ -41,6 +47,8 @@ services:
       - db
     env_file:
       - .env
+    profiles:
+      - migrate
 
 volumes:
   db_data:
