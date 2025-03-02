@@ -30,6 +30,20 @@ def sample_content(db_session, sample_user, sample_embedding):
 
 
 @pytest.fixture
+def sample_content2(db_session, sample_user, sample_embedding2):
+    """Create a sample content for testing."""
+    content = Content(
+        content_path="test2.txt",
+        content_tag=True,
+        user_id=sample_user.id,
+        embedding_id=sample_embedding2.id,
+    )
+    db_session.add(content)
+    db_session.commit()
+    return content
+
+
+@pytest.fixture
 def sample_model(db_session):
     """Create a sample model for testing."""
     model = Model(model_name="sample model", modality=0)
@@ -47,6 +61,15 @@ def auth_header(client, sample_user):
 
 @pytest.fixture
 def sample_embedding(db_session, sample_model):
+    """Create a sample embedding for testing."""
+    embedding = Embedding(vector=np.random.rand(328), model_id=sample_model.id)
+    db_session.add(embedding)
+    db_session.commit()
+    return embedding
+
+
+@pytest.fixture
+def sample_embedding2(db_session, sample_model):
     """Create a sample embedding for testing."""
     embedding = Embedding(vector=np.random.rand(328), model_id=sample_model.id)
     db_session.add(embedding)
@@ -81,7 +104,13 @@ def sample_search_record(db_session, sample_query, sample_content):
 
 
 def test_search_files(
-    client, auth_header, sample_user, sample_model, monkeypatch, sample_content
+    client,
+    auth_header,
+    sample_user,
+    sample_model,
+    monkeypatch,
+    sample_content,
+    sample_content2,
 ):
     """Test the POST /search route."""
 
@@ -90,12 +119,12 @@ def test_search_files(
 
     def mock_search(query_embedding):
         return [
-            {"content_id": 1, "similarity_score": 0.95},
-            {"content_id": 2, "similarity_score": 0.85},
+            {"content_id": sample_content.id, "similarity_score": 0.95},
+            {"content_id": sample_content2.id, "similarity_score": 0.85},
         ]
 
     monkeypatch.setattr("smse_backend.services.create_embedding", mock_create_embedding)
-    monkeypatch.setattr("smse_backend.routes.v1.search", mock_search)
+    monkeypatch.setattr("smse_backend.routes.v1.search.search", mock_search)
 
     data = {"query": "sample query"}
     response = client.post("/api/v1/search", headers=auth_header, json=data)
