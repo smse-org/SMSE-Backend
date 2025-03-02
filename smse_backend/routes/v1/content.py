@@ -1,3 +1,4 @@
+from webbrowser import get
 from flask import Blueprint, request, jsonify, current_app, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
@@ -18,12 +19,15 @@ def allowed_file(filename):
     """Check if file extension is allowed"""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 def get_first_directory(path):
     parts = path.lstrip(os.sep).split(os.sep)  # Remove leading slashes & split
     return parts[0] if parts else None  # Return first part if exists
 
+
 def get_full_path(file_path):
     return os.path.join(current_app.config["UPLOAD_FOLDER"], file_path)
+
 
 @content_bp.route("/contents", methods=["POST"])
 @jwt_required()
@@ -38,7 +42,7 @@ def create_content():
     if file.filename == "":
         return jsonify({"msg": "No selected file"}), 400
 
-    if file and allowed_file(file.filename):        
+    if file and allowed_file(file.filename):
         # Secure the filename and add a random UUID
         filename = secure_filename(file.filename)
         unique_filename = f"{uuid.uuid4().hex}_{filename}"
@@ -217,55 +221,41 @@ def get_allowed_extensions():
     return jsonify({"allowed_extensions": list(ALLOWED_EXTENSIONS)}), 200
 
 
-@content_bp.route("/contents/<int:content_id>/download", methods=["GET"])
+@content_bp.route("/contents/download", methods=["GET"])
 @jwt_required()
-def download_content_by_id(content_id):
+def download_content():
     """
-    Download a specific content file by its ID for the current user.
-
-    Args:
-        content_id (int): The ID of the content to download.
-
-    Returns:
-        Response: File response containing the content file or an error message.
-    """
-    current_user_id = get_jwt_identity()
-    content = Content.query.filter_by(id=content_id, user_id=current_user_id).first()
-
-    if not content:
-        return jsonify({"message": "Content not found"}), 404
-
-    if not os.path.exists(get_full_path(content.content_path)):
-        return jsonify({"message": "File not found"}), 404
-
-    return send_file(get_full_path(content.content_path), as_attachment=True)
-
-
-@content_bp.route("/uploads/<file_path>", methods=["GET"])
-@jwt_required()
-def download_content_by_path(file_path):
-    """
-    Download a specific content file using its path for the current user.
+    Download a specific content file by its ID or path for the current user.
 
     Query Params:
-        file_path (str): The full path of the content to download.
+        content_id (int, optional): The ID of the content to download.
+        file_path (str, optional): The full path of the content to download.
 
     Returns:
         Response: File response containing the content file or an error message.
     """
-    print("form API")
+    content_id = request.args.get("content_id", type=int)
+    file_path = request.args.get("file_path", type=str)
+
+    if content_id is None and file_path is None:
+        return jsonify({"message": "Content ID or file path is required"}), 400
+
     current_user_id = get_jwt_identity()
-    
-    if not file_path:
-        return jsonify({"message": "File path is required"}), 400
 
-    if get_first_directory(file_path) != current_user_id:
-        return jsonify({"message": "Unauthorized access"}), 403
+    if content_id is not None:
+        content = Content.query.filter_by(
+            id=content_id, user_id=current_user_id
+        ).first()
+        if not content:
+            return jsonify({"message": "Content not found"}), 404
+        file_path = content.content_path
 
-    # Ensure the file exists
-    if not os.path.exists(get_full_path(file_path)):
-        print(get_full_path(file_path))
-        print("saed")
-        return jsonify({"message": "File not found"}), 404
-        
+    if file_path is not None:
+        if get_first_directory(file_path) != current_user_id:
+            print(get_first_directory(file_path), current_user_id)
+            return jsonify({"message": "Unauthorized access"}), 403
+
+        if not os.path.exists(get_full_path(file_path)):
+            return jsonify({"message": "File not found"}), 404
+
     return send_file(get_full_path(file_path), as_attachment=True)
