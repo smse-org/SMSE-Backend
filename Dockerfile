@@ -15,6 +15,7 @@ RUN poetry install --no-root
 
 # Copy the rest of the application code into the container
 COPY smse_backend/ ./smse_backend/
+COPY swagger.json ./swagger.json
 
 # Set environment variables
 ENV FLASK_APP=smse_backend/app.py
