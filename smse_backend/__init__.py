@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
+from flask_swagger_ui import get_swaggerui_blueprint
 import os
 
 # Initialize extensions
@@ -10,6 +11,12 @@ db = SQLAlchemy()
 migrate = Migrate()
 bcrypt = Bcrypt()
 jwt = JWTManager()
+
+swaggerui_blueprint = get_swaggerui_blueprint(
+    "/api/docs",  # Swagger UI static files will be mapped to '{SWAGGER_URL}/dist/'
+    "/swagger.json",
+    config={"app_name": "SMSE API"},  # Swagger UI config overrides
+)
 
 
 def create_app(config_name="DevelopmentConfig"):
@@ -45,5 +52,6 @@ def create_app(config_name="DevelopmentConfig"):
     from smse_backend.routes import register_blueprints
 
     register_blueprints(app)
+    app.register_blueprint(swaggerui_blueprint)
 
     return app

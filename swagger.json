@@ -1,0 +1,1125 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+      "title": "SMSE Backend API",
+      "description": "RESTful API for the SMSE project backend.",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/api/v1/auth/register": {
+        "post": {
+          "summary": "Register a new user",
+          "tags": ["Authentication"],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "username": { "type": "string" },
+                    "email": { "type": "string" },
+                    "password": { "type": "string" }
+                  },
+                  "required": ["username", "email", "password"]
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "User created successfully",
+              "content": {
+                "application/json": {
+                  "example": { "msg": "User created successfully" }
+                }
+              }
+            },
+            "400": {
+              "description": "Missing required fields or user already exists",
+              "content": {
+                "application/json": {
+                  "examples": {
+                    "missing_fields": { "value": { "msg": "Missing required fields" } },
+                    "username_exists": { "value": { "msg": "Username already exists" } },
+                    "email_exists": { "value": { "msg": "Email already exists" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/auth/login": {
+        "post": {
+          "summary": "Login a user and get a JWT token",
+          "tags": ["Authentication"],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "username": { "type": "string" },
+                    "password": { "type": "string" }
+                  },
+                  "required": ["username", "password"]
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Login successful, returns JWT token",
+              "content": {
+                "application/json": {
+                  "example": { "access_token": "string" }
+                }
+              }
+            },
+            "401": {
+              "description": "Invalid credentials",
+              "content": {
+                "application/json": {
+                  "example": { "msg": "Invalid credentials" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/auth/refresh": {
+      "post": {
+        "summary": "Refresh JWT token",
+        "description": "Refresh a JWT token.",
+        "operationId": "refreshToken",
+        "tags": ["Authentication"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token refreshed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string",
+                      "description": "Newly issued access token."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token expired or invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "msg": {
+                      "type": "string",
+                      "enum": ["Token has expired", "Invalid token"],
+                      "description": "Error message indicating token expiration or invalidity."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "summary": "Logout user",
+        "description": "Logout a user and revoke the JWT token.",
+        "operationId": "logoutUser",
+        "tags": ["Authentication"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Logout successful.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "msg": {
+                      "type": "string",
+                      "example": "Logout successful"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "msg": {
+                      "type": "string",
+                      "example": "Invalid token"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/protected": {
+      "get": {
+        "summary": "Protected route",
+        "description": "A protected route that requires a valid JWT token.",
+        "operationId": "getProtectedResource",
+        "tags": ["Authentication"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the username of the authenticated user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "username": {
+                      "type": "string",
+                      "example": "johndoe"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. Invalid or missing token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "msg": {
+                      "type": "string",
+                      "example": "Invalid or missing token"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+      "/api/v1/users/me": {
+        "get": {
+          "summary": "Get details of the authenticated user",
+          "tags": ["Users"],
+          "security": [{ "bearerAuth": [] }],
+          "responses": {
+            "200": {
+              "description": "Returns user details",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "id": "integer",
+                    "username": "string",
+                    "email": "string",
+                    "created_at": "string"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "User not found",
+              "content": {
+                "application/json": {
+                  "example": { "message": "User not found" }
+                }
+              }
+            }
+          }
+        },
+        "put": {
+          "summary": "Update authenticated user",
+          "description": "Update the details of the authenticated user.",
+          "operationId": "updateUser",
+          "tags": ["Users"],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "username": {
+                      "type": "string",
+                      "description": "New username for the user."
+                    },
+                    "email": {
+                      "type": "string",
+                      "description": "New email address for the user.",
+                      "format": "email"
+                    }
+                  },
+                  "required": ["username", "email"]
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "User updated successfully.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "example": "User updated successfully"
+                      },
+                      "user": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "example": 1
+                          },
+                          "username": {
+                            "type": "string",
+                            "example": "johndoe"
+                          },
+                          "email": {
+                            "type": "string",
+                            "example": "johndoe@example.com"
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "example": "2025-03-03T12:34:56Z"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+            }
+          },
+          "400": {
+            "description": "Bad request. Username or email already exists, or invalid email format.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "enum": [
+                        "Username already exists",
+                        "Email already exists",
+                        "Invalid email address"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "User not found"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete authenticated user",
+        "description": "Delete the authenticated user.",
+        "operationId": "deleteUser",
+        "tags": ["Users"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "User deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "User not found"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      },
+      "/api/v1/contents": {
+        "post": {
+        "summary": "Upload a new content file",
+        "description": "Upload a new content file.",
+        "operationId": "createContent",
+        "tags": ["Contents"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The content file to upload"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Content created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Content created successfully"
+                    },
+                    "content": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "content_path": {
+                          "type": "string",
+                          "example": "/uploads/content123.mp4"
+                        },
+                        "content_tag": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g., no file part, no selected file, file type not allowed).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "msg": {
+                      "type": "string",
+                      "example": "No file part"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Error creating content"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+        "get": {
+          "summary": "Get all contents for the authenticated user",
+          "tags": ["Contents"],
+          "security": [{ "bearerAuth": [] }],
+          "responses": {
+            "200": {
+              "description": "Returns a list of contents",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "contents": [{
+                      "id": "integer",
+                      "content_path": "string",
+                      "content_tag": "boolean"
+                    }]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/contents/{content_id}": {
+      "get": {
+        "summary": "Get content by ID",
+        "description": "Retrieve details of a specific content by its ID.",
+        "operationId": "getContentById",
+        "tags": ["Contents"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "content_id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the content to retrieve",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Content details retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "content": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "content_path": {
+                          "type": "string",
+                          "example": "/uploads/content123.mp4"
+                        },
+                        "content_tag": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Content not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Content not found"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update content by ID",
+        "description": "Update a specific content by its ID.",
+        "operationId": "updateContentById",
+        "tags": ["Contents"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "content_id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the content to update",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content_tag": {
+                    "type": "boolean",
+                    "example": true
+                  }
+                },
+                "required": ["content_tag"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Content updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Content updated successfully"
+                    },
+                    "content": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "content_path": {
+                          "type": "string",
+                          "example": "/uploads/content123.mp4"
+                        },
+                        "content_tag": {
+                          "type": "boolean",
+                          "example": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Content not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Content not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error updating content.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Error updating content"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete content by ID",
+        "description": "Delete a specific content by its ID.",
+        "operationId": "deleteContentById",
+        "tags": ["Contents"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "content_id",
+            "in": "path",
+            "required": true,
+            "description": "ID of the content to delete",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Content deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Content deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Content not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Content not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error deleting content.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Error deleting content"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contents/allowed_extensions": {
+      "get": {
+        "summary": "Get Allowed Extensions",
+        "description": "Retrieve the list of allowed file extensions for content uploads.",
+        "operationId": "getAllowedExtensions",
+        "tags": ["Contents"],
+        "responses": {
+          "200": {
+            "description": "Returns the list of allowed extensions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "allowed_extensions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "example": [".jpg", ".png", ".mp4", ".pdf"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search": {
+      "post": {
+        "summary": "Search Files",
+        "description": "Search for files based on a query string.",
+        "operationId": "searchFiles",
+        "tags": ["Search"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "example": "example search text"
+                  }
+                },
+                "required": ["query"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Search completed successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Search completed successfully"
+                    },
+                    "query_id": {
+                      "type": "integer",
+                      "example": 12345
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "content_id": {
+                            "type": "integer",
+                            "example": 6789
+                          },
+                          "similarity_score": {
+                            "type": "number",
+                            "format": "float",
+                            "example": 0.89
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request. Query text is required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Query text is required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error. Error creating embedding for query.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Error creating embedding for query"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/queries": {
+      "get": {
+        "summary": "Get Query History",
+        "description": "Retrieve the search query history for the authenticated user.",
+        "operationId": "getQueryHistory",
+        "tags": ["Queries"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved query history.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "example": 123
+                      },
+                      "text": {
+                        "type": "string",
+                        "example": "example search query"
+                      },
+                      "timestamp": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-03-03T12:34:56Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/searches/{query_id}": {
+      "get": {
+        "summary": "Get Search Results History",
+        "description": "Retrieve the search results history for a specific query.",
+        "operationId": "getSearchResultsHistory",
+        "tags": ["Search"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "query_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the query to retrieve search results history for."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved search results history.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "query": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 123
+                        },
+                        "text": {
+                          "type": "string",
+                          "example": "example search query"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2025-03-03T12:34:56Z"
+                        }
+                      }
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "content_id": {
+                            "type": "integer",
+                            "example": 456
+                          },
+                          "similarity_score": {
+                            "type": "number",
+                            "format": "float",
+                            "example": 0.87
+                          },
+                          "retrieved_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2025-03-03T12:40:00Z"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Query not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Query not found"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/queries/{query_id}": {
+      "delete": {
+        "summary": "Delete Query",
+        "description": "Deletes a specific query by its ID.",
+        "operationId": "deleteQuery",
+        "tags": ["Queries"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "query_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "The ID of the query to delete."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Query deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Query deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Query not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Query not found"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer",
+          "bearerFormat": "JWT"
+        }
+      }
+    },
+    "tags": [
+      { "name": "Authentication", "description": "Endpoints related to user authentication" },
+      { "name": "Users", "description": "Endpoints for user management" },
+      { "name": "Contents", "description": "Endpoints for managing content files" }
+    ]
+  }
+  
