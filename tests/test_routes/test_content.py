@@ -4,6 +4,7 @@ import pytest
 from smse_backend.models import Content, Embedding, Model, User
 from flask_jwt_extended import create_access_token
 from io import BytesIO
+import os
 
 
 @pytest.fixture
@@ -45,7 +46,7 @@ def sample_embedding(db_session, sample_model, sample_user):
 def sample_content(db_session, sample_user, sample_embedding):
     """Create a sample content for testing."""
     content = Content(
-        content_path=f"/{sample_user.id}/test/path/file.txt",
+        content_path=os.path.normpath(f"/{sample_user.id}/test/path/file.txt"),
         content_tag=True,
         user_id=sample_user.id,
         embedding_id=sample_embedding.id,
@@ -203,7 +204,7 @@ def test_download_content_non_existent_path(
     client, auth_header, sample_content, monkeypatch
 ):
     """Test download content with non-existent file path."""
-    non_existent_path = "1/non_existent_file.txt"
+    non_existent_path = os.path.normpath("1/non_existent.txt")
 
     def mock_os_path_exists(path):
         return path == non_existent_path
