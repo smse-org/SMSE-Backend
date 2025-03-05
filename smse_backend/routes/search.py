@@ -71,7 +71,7 @@ def search_files():
     )
 
 
-@search_bp.route("/queries", methods=["GET"])
+@search_bp.route("/search", methods=["GET"])
 @jwt_required()
 def get_query_history():
     # TODO: Implement pagination
@@ -93,7 +93,7 @@ def get_query_history():
     )
 
 
-@search_bp.route("/searches/<int:query_id>", methods=["GET"])
+@search_bp.route("/search/<int:query_id>", methods=["GET"])
 @jwt_required()
 def get_search_results_history(query_id):
     current_user_id = get_jwt_identity()
@@ -126,7 +126,7 @@ def get_search_results_history(query_id):
     )
 
 
-@search_bp.route("/queries/<int:query_id>", methods=["DELETE"])
+@search_bp.route("/search/<int:query_id>", methods=["DELETE"])
 @jwt_required()
 def delete_query(query_id):
     current_user_id = get_jwt_identity()

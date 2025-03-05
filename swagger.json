@@ -1,100 +1,141 @@
 {
-    "openapi": "3.0.0",
-    "info": {
-      "title": "SMSE Backend API",
-      "description": "RESTful API for the SMSE project backend.",
-      "version": "1.0.0"
-    },
-    "paths": {
-      "/api/auth/register": {
-        "post": {
-          "summary": "Register a new user",
-          "tags": ["Authentication"],
-          "requestBody": {
-            "required": true,
+  "openapi": "3.0.0",
+  "info": {
+    "title": "SMSE Backend API",
+    "description": "RESTful API for the SMSE project backend.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "summary": "Register a new user",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "username",
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "username": { "type": "string" },
-                    "email": { "type": "string" },
-                    "password": { "type": "string" }
-                  },
-                  "required": ["username", "email", "password"]
+                "example": {
+                  "msg": "User created successfully"
                 }
               }
             }
           },
-          "responses": {
-            "201": {
-              "description": "User created successfully",
-              "content": {
-                "application/json": {
-                  "example": { "msg": "User created successfully" }
-                }
-              }
-            },
-            "400": {
-              "description": "Missing required fields or user already exists",
-              "content": {
-                "application/json": {
-                  "examples": {
-                    "missing_fields": { "value": { "msg": "Missing required fields" } },
-                    "username_exists": { "value": { "msg": "Username already exists" } },
-                    "email_exists": { "value": { "msg": "Email already exists" } }
+          "400": {
+            "description": "Missing required fields or user already exists",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "missing_fields": {
+                    "value": {
+                      "msg": "Missing required fields"
+                    }
+                  },
+                  "username_exists": {
+                    "value": {
+                      "msg": "Username already exists"
+                    }
+                  },
+                  "email_exists": {
+                    "value": {
+                      "msg": "Email already exists"
+                    }
                   }
                 }
               }
             }
           }
         }
-      },
-      "/api/auth/login": {
-        "post": {
-          "summary": "Login a user and get a JWT token",
-          "tags": ["Authentication"],
-          "requestBody": {
-            "required": true,
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "Login a user and get a JWT token",
+        "tags": [
+          "Authentication"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "username",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful, returns JWT token",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "username": { "type": "string" },
-                    "password": { "type": "string" }
-                  },
-                  "required": ["username", "password"]
+                "example": {
+                  "access_token": "string"
                 }
               }
             }
           },
-          "responses": {
-            "200": {
-              "description": "Login successful, returns JWT token",
-              "content": {
-                "application/json": {
-                  "example": { "access_token": "string" }
-                }
-              }
-            },
-            "401": {
-              "description": "Invalid credentials",
-              "content": {
-                "application/json": {
-                  "example": { "msg": "Invalid credentials" }
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "example": {
+                  "msg": "Invalid credentials"
                 }
               }
             }
           }
         }
-      },
-      "/api/auth/refresh": {
+      }
+    },
+    "/api/auth/refresh": {
       "post": {
         "summary": "Refresh JWT token",
         "description": "Refresh a JWT token.",
         "operationId": "refreshToken",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -126,7 +167,10 @@
                   "properties": {
                     "msg": {
                       "type": "string",
-                      "enum": ["Token has expired", "Invalid token"],
+                      "enum": [
+                        "Token has expired",
+                        "Invalid token"
+                      ],
                       "description": "Error message indicating token expiration or invalidity."
                     }
                   }
@@ -142,7 +186,9 @@
         "summary": "Logout user",
         "description": "Logout a user and revoke the JWT token.",
         "operationId": "logoutUser",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -189,7 +235,9 @@
         "summary": "Protected route",
         "description": "A protected route that requires a valid JWT token.",
         "operationId": "getProtectedResource",
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -231,103 +279,116 @@
         }
       }
     },
-      "/api/users/me": {
-        "get": {
-          "summary": "Get details of the authenticated user",
-          "tags": ["Users"],
-          "security": [{ "bearerAuth": [] }],
-          "responses": {
-            "200": {
-              "description": "Returns user details",
-              "content": {
-                "application/json": {
-                  "example": {
-                    "id": "integer",
-                    "username": "string",
-                    "email": "string",
-                    "created_at": "string"
-                  }
+    "/api/users/me": {
+      "get": {
+        "summary": "Get details of the authenticated user",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns user details",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "integer",
+                  "username": "string",
+                  "email": "string",
+                  "created_at": "string"
                 }
               }
-            },
-            "404": {
-              "description": "User not found",
-              "content": {
-                "application/json": {
-                  "example": { "message": "User not found" }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "User not found"
                 }
               }
             }
           }
-        },
-        "put": {
-          "summary": "Update authenticated user",
-          "description": "Update the details of the authenticated user.",
-          "operationId": "updateUser",
-          "tags": ["Users"],
-          "security": [
-            {
-              "bearerAuth": []
+        }
+      },
+      "put": {
+        "summary": "Update authenticated user",
+        "description": "Update the details of the authenticated user.",
+        "operationId": "updateUser",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "description": "New username for the user."
+                  },
+                  "email": {
+                    "type": "string",
+                    "description": "New email address for the user.",
+                    "format": "email"
+                  }
+                },
+                "required": [
+                  "username",
+                  "email"
+                ]
+              }
             }
-          ],
-          "requestBody": {
-            "required": true,
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated successfully.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "username": {
+                    "message": {
                       "type": "string",
-                      "description": "New username for the user."
+                      "example": "User updated successfully"
                     },
-                    "email": {
-                      "type": "string",
-                      "description": "New email address for the user.",
-                      "format": "email"
-                    }
-                  },
-                  "required": ["username", "email"]
-                }
-              }
-            }
-          },
-          "responses": {
-            "200": {
-              "description": "User updated successfully.",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object",
-                    "properties": {
-                      "message": {
-                        "type": "string",
-                        "example": "User updated successfully"
-                      },
-                      "user": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "integer",
-                            "example": 1
-                          },
-                          "username": {
-                            "type": "string",
-                            "example": "johndoe"
-                          },
-                          "email": {
-                            "type": "string",
-                            "example": "johndoe@example.com"
-                          },
-                          "created_at": {
-                            "type": "string",
-                            "example": "2025-03-03T12:34:56Z"
-                          }
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "username": {
+                          "type": "string",
+                          "example": "johndoe"
+                        },
+                        "email": {
+                          "type": "string",
+                          "example": "johndoe@example.com"
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "example": "2025-03-03T12:34:56Z"
                         }
                       }
                     }
                   }
                 }
+              }
             }
           },
           "400": {
@@ -372,7 +433,9 @@
         "summary": "Delete authenticated user",
         "description": "Delete the authenticated user.",
         "operationId": "deleteUser",
-        "tags": ["Users"],
+        "tags": [
+          "Users"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -413,13 +476,15 @@
           }
         }
       }
-      },
-      "/api/contents": {
-        "post": {
+    },
+    "/api/contents": {
+      "post": {
         "summary": "Upload a new content file",
         "description": "Upload a new content file.",
         "operationId": "createContent",
-        "tags": ["Contents"],
+        "tags": [
+          "Contents"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -510,34 +575,44 @@
           }
         }
       },
-        "get": {
-          "summary": "Get all contents for the authenticated user",
-          "tags": ["Contents"],
-          "security": [{ "bearerAuth": [] }],
-          "responses": {
-            "200": {
-              "description": "Returns a list of contents",
-              "content": {
-                "application/json": {
-                  "example": {
-                    "contents": [{
+      "get": {
+        "summary": "Get all contents for the authenticated user",
+        "tags": [
+          "Contents"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns a list of contents",
+            "content": {
+              "application/json": {
+                "example": {
+                  "contents": [
+                    {
                       "id": "integer",
                       "content_path": "string",
                       "content_tag": "boolean"
-                    }]
-                  }
+                    }
+                  ]
                 }
               }
             }
           }
         }
-      },
-      "/api/contents/{content_id}": {
+      }
+    },
+    "/api/contents/{content_id}": {
       "get": {
         "summary": "Get content by ID",
         "description": "Retrieve details of a specific content by its ID.",
         "operationId": "getContentById",
-        "tags": ["Contents"],
+        "tags": [
+          "Contents"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -606,7 +681,9 @@
         "summary": "Update content by ID",
         "description": "Update a specific content by its ID.",
         "operationId": "updateContentById",
-        "tags": ["Contents"],
+        "tags": [
+          "Contents"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -635,7 +712,9 @@
                     "example": true
                   }
                 },
-                "required": ["content_tag"]
+                "required": [
+                  "content_tag"
+                ]
               }
             }
           }
@@ -712,7 +791,9 @@
         "summary": "Delete content by ID",
         "description": "Delete a specific content by its ID.",
         "operationId": "deleteContentById",
-        "tags": ["Contents"],
+        "tags": [
+          "Contents"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -786,7 +867,9 @@
         "summary": "Get Allowed Extensions",
         "description": "Retrieve the list of allowed file extensions for content uploads.",
         "operationId": "getAllowedExtensions",
-        "tags": ["Contents"],
+        "tags": [
+          "Contents"
+        ],
         "responses": {
           "200": {
             "description": "Returns the list of allowed extensions.",
@@ -800,7 +883,12 @@
                       "items": {
                         "type": "string"
                       },
-                      "example": [".jpg", ".png", ".mp4", ".pdf"]
+                      "example": [
+                        ".jpg",
+                        ".png",
+                        ".mp4",
+                        ".pdf"
+                      ]
                     }
                   }
                 }
@@ -815,7 +903,9 @@
         "summary": "Search Files",
         "description": "Search for files based on a query string.",
         "operationId": "searchFiles",
-        "tags": ["Search"],
+        "tags": [
+          "Search"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -833,7 +923,9 @@
                     "example": "example search text"
                   }
                 },
-                "required": ["query"]
+                "required": [
+                  "query"
+                ]
               }
             }
           }
@@ -909,14 +1001,14 @@
             }
           }
         }
-      }
-    },
-    "/api/queries": {
+      },
       "get": {
         "summary": "Get Query History",
         "description": "Retrieve the search query history for the authenticated user.",
         "operationId": "getQueryHistory",
-        "tags": ["Queries"],
+        "tags": [
+          "Queries"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -954,12 +1046,14 @@
         }
       }
     },
-    "/api/searches/{query_id}": {
+    "/api/search/{query_id}": {
       "get": {
         "summary": "Get Search Results History",
         "description": "Retrieve the search results history for a specific query.",
         "operationId": "getSearchResultsHistory",
-        "tags": ["Search"],
+        "tags": [
+          "Search"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -1046,14 +1140,14 @@
             }
           }
         }
-      }
-    },
-    "/api/queries/{query_id}": {
+      },
       "delete": {
         "summary": "Delete Query",
         "description": "Deletes a specific query by its ID.",
         "operationId": "deleteQuery",
-        "tags": ["Queries"],
+        "tags": [
+          "Queries"
+        ],
         "security": [
           {
             "bearerAuth": []
@@ -1106,20 +1200,28 @@
         }
       }
     }
-    },
-    "components": {
-      "securitySchemes": {
-        "bearerAuth": {
-          "type": "http",
-          "scheme": "bearer",
-          "bearerFormat": "JWT"
-        }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
+    }
+  },
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Endpoints related to user authentication"
     },
-    "tags": [
-      { "name": "Authentication", "description": "Endpoints related to user authentication" },
-      { "name": "Users", "description": "Endpoints for user management" },
-      { "name": "Contents", "description": "Endpoints for managing content files" }
-    ]
-  }
-  
+    {
+      "name": "Users",
+      "description": "Endpoints for user management"
+    },
+    {
+      "name": "Contents",
+      "description": "Endpoints for managing content files"
+    }
+  ]
+}

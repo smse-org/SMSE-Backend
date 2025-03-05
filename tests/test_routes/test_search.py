@@ -138,7 +138,7 @@ def test_search_files(
 
 def test_get_query_history(client, auth_header, sample_query):
     """Test the GET /queries route."""
-    response = client.get("/api/queries", headers=auth_header)
+    response = client.get("/api/search", headers=auth_header)
     assert response.status_code == 200
     assert len(response.json) == 1
     assert response.json[0]["id"] == sample_query.id
@@ -146,7 +146,7 @@ def test_get_query_history(client, auth_header, sample_query):
 
 def test_delete_query(client, auth_header, sample_query, db_session):
     """Test the DELETE /queries/<int:query_id> route."""
-    response = client.delete(f"/api/queries/{sample_query.id}", headers=auth_header)
+    response = client.delete(f"/api/search/{sample_query.id}", headers=auth_header)
     assert response.status_code == 200
     assert response.json["message"] == "Query deleted successfully"
     assert db_session.get(Query, sample_query.id) is None
@@ -156,7 +156,7 @@ def test_get_search_results_history(
     client, auth_header, sample_query, sample_search_record
 ):
     """Test the GET /searches/<int:query_id> route."""
-    response = client.get(f"/api/searches/{sample_query.id}", headers=auth_header)
+    response = client.get(f"/api/search/{sample_query.id}", headers=auth_header)
     assert response.status_code == 200
     assert response.json["query"]["id"] == sample_query.id
     assert response.json["query"]["text"] == sample_query.text
