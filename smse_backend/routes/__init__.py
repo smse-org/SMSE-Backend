@@ -1,9 +1,18 @@
 import flask
-from .v1 import v1_bp
-from flask import Blueprint, jsonify
+from flask import Blueprint
+from .auth import auth_bp
+from .index import index_bp
+from .content import content_bp
+from .user import user_bp
+from .search import search_bp
+
 
 main_bp = Blueprint("main", __name__, url_prefix="/api")
-main_bp.register_blueprint(v1_bp)
+main_bp.register_blueprint(auth_bp)
+main_bp.register_blueprint(index_bp)
+main_bp.register_blueprint(content_bp)
+main_bp.register_blueprint(user_bp)
+main_bp.register_blueprint(search_bp)
 
 
 def register_blueprints(app):

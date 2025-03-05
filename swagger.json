@@ -6,7 +6,7 @@
       "version": "1.0.0"
     },
     "paths": {
-      "/api/v1/auth/register": {
+      "/api/auth/register": {
         "post": {
           "summary": "Register a new user",
           "tags": ["Authentication"],
@@ -50,7 +50,7 @@
           }
         }
       },
-      "/api/v1/auth/login": {
+      "/api/auth/login": {
         "post": {
           "summary": "Login a user and get a JWT token",
           "tags": ["Authentication"],
@@ -89,7 +89,7 @@
           }
         }
       },
-      "/api/v1/auth/refresh": {
+      "/api/auth/refresh": {
       "post": {
         "summary": "Refresh JWT token",
         "description": "Refresh a JWT token.",
@@ -137,7 +137,7 @@
         }
       }
     },
-    "/api/v1/auth/logout": {
+    "/api/auth/logout": {
       "post": {
         "summary": "Logout user",
         "description": "Logout a user and revoke the JWT token.",
@@ -184,7 +184,7 @@
         }
       }
     },
-    "/api/v1/auth/protected": {
+    "/api/auth/protected": {
       "get": {
         "summary": "Protected route",
         "description": "A protected route that requires a valid JWT token.",
@@ -231,7 +231,7 @@
         }
       }
     },
-      "/api/v1/users/me": {
+      "/api/users/me": {
         "get": {
           "summary": "Get details of the authenticated user",
           "tags": ["Users"],
@@ -414,7 +414,7 @@
         }
       }
       },
-      "/api/v1/contents": {
+      "/api/contents": {
         "post": {
         "summary": "Upload a new content file",
         "description": "Upload a new content file.",
@@ -532,7 +532,7 @@
           }
         }
       },
-      "/api/v1/contents/{content_id}": {
+      "/api/contents/{content_id}": {
       "get": {
         "summary": "Get content by ID",
         "description": "Retrieve details of a specific content by its ID.",
@@ -781,7 +781,7 @@
         }
       }
     },
-    "/api/v1/contents/allowed_extensions": {
+    "/api/contents/allowed_extensions": {
       "get": {
         "summary": "Get Allowed Extensions",
         "description": "Retrieve the list of allowed file extensions for content uploads.",
@@ -810,7 +810,7 @@
         }
       }
     },
-    "/api/v1/search": {
+    "/api/search": {
       "post": {
         "summary": "Search Files",
         "description": "Search for files based on a query string.",
@@ -911,7 +911,7 @@
         }
       }
     },
-    "/api/v1/queries": {
+    "/api/queries": {
       "get": {
         "summary": "Get Query History",
         "description": "Retrieve the search query history for the authenticated user.",
@@ -954,7 +954,7 @@
         }
       }
     },
-    "/api/v1/searches/{query_id}": {
+    "/api/searches/{query_id}": {
       "get": {
         "summary": "Get Search Results History",
         "description": "Retrieve the search results history for a specific query.",
@@ -1048,7 +1048,7 @@
         }
       }
     },
-    "/api/v1/queries/{query_id}": {
+    "/api/queries/{query_id}": {
       "delete": {
         "summary": "Delete Query",
         "description": "Deletes a specific query by its ID.",

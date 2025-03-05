@@ -69,7 +69,7 @@ def test_create_content(client, auth_header, sample_user, sample_model, monkeypa
 
     data = {"file": (BytesIO(b"file content"), "test.txt")}
     response = client.post(
-        "/api/v1/contents",
+        "/api/contents",
         headers=auth_header,
         data=data,
         content_type="multipart/form-data",
@@ -81,7 +81,7 @@ def test_create_content(client, auth_header, sample_user, sample_model, monkeypa
 
 def test_get_all_contents(client, auth_header, sample_content):
     """Test the GET /contents route."""
-    response = client.get("/api/v1/contents", headers=auth_header)
+    response = client.get("/api/contents", headers=auth_header)
     assert response.status_code == 200
     assert len(response.json["contents"]) == 1
     assert response.json["contents"][0]["id"] == sample_content.id
@@ -89,7 +89,7 @@ def test_get_all_contents(client, auth_header, sample_content):
 
 def test_get_content(client, auth_header, sample_content):
     """Test the GET /contents/<int:content_id> route."""
-    response = client.get(f"/api/v1/contents/{sample_content.id}", headers=auth_header)
+    response = client.get(f"/api/contents/{sample_content.id}", headers=auth_header)
     assert response.status_code == 200
     assert response.json["content"]["id"] == sample_content.id
 
@@ -98,7 +98,7 @@ def test_update_content(client, auth_header, sample_content):
     """Test the PUT /contents/<int:content_id> route."""
     data = {"content_tag": False}
     response = client.put(
-        f"/api/v1/contents/{sample_content.id}", headers=auth_header, json=data
+        f"/api/contents/{sample_content.id}", headers=auth_header, json=data
     )
     assert response.status_code == 200
     assert response.json["content"]["content_tag"] is False
@@ -106,16 +106,14 @@ def test_update_content(client, auth_header, sample_content):
 
 def test_delete_content(client, auth_header, sample_content):
     """Test the DELETE /contents/<int:content_id> route."""
-    response = client.delete(
-        f"/api/v1/contents/{sample_content.id}", headers=auth_header
-    )
+    response = client.delete(f"/api/contents/{sample_content.id}", headers=auth_header)
     assert response.status_code == 200
     assert response.json["message"] == "Content deleted successfully"
 
 
 def test_get_allowed_extensions(client):
     """Test the GET /contents/allowed_extensions route."""
-    response = client.get("/api/v1/contents/allowed_extensions")
+    response = client.get("/api/contents/allowed_extensions")
     assert response.status_code == 200
     assert "txt" in response.json["allowed_extensions"]
 
@@ -128,10 +126,10 @@ def test_download_content_by_id(client, auth_header, sample_content, monkeypatch
         return path == sample_content.content_path
 
     monkeypatch.setattr("os.path.exists", mock_os_path_exists)
-    monkeypatch.setattr("smse_backend.routes.v1.content.send_file", mock_send_file)
+    monkeypatch.setattr("smse_backend.routes.content.send_file", mock_send_file)
 
     response = client.get(
-        "/api/v1/contents/download?content_id={}".format(sample_content.id),
+        "/api/contents/download?content_id={}".format(sample_content.id),
         headers=auth_header,
     )
 
@@ -150,10 +148,10 @@ def test_download_content_by_path(client, auth_header, sample_content, monkeypat
         return path == sample_content.content_path
 
     monkeypatch.setattr("os.path.exists", mock_os_path_exists)
-    monkeypatch.setattr("smse_backend.routes.v1.content.send_file", mock_send_file)
+    monkeypatch.setattr("smse_backend.routes.content.send_file", mock_send_file)
 
     response = client.get(
-        "/api/v1/contents/download?file_path={}".format(sample_content.content_path),
+        "/api/contents/download?file_path={}".format(sample_content.content_path),
         headers=auth_header,
     )
 
@@ -166,16 +164,14 @@ def test_download_content_by_path(client, auth_header, sample_content, monkeypat
 
 def test_download_content_missing_query_params(client, auth_header):
     """Test download content with missing query parameters."""
-    response = client.get("/api/v1/contents/download", headers=auth_header)
+    response = client.get("/api/contents/download", headers=auth_header)
     assert response.status_code == 400
     assert response.json["message"] == "Content ID or file path is required"
 
 
 def test_download_content_non_existent_id(client, auth_header):
     """Test download content with non-existent content ID."""
-    response = client.get(
-        "/api/v1/contents/download?content_id=999", headers=auth_header
-    )
+    response = client.get("/api/contents/download?content_id=999", headers=auth_header)
     assert response.status_code == 404
     assert response.json["message"] == "Content not found"
 
@@ -192,7 +188,7 @@ def test_download_content_unauthorized_access(
     monkeypatch.setattr("os.path.exists", mock_os_path_exists)
 
     response = client.get(
-        "/api/v1/contents/download?file_path={}".format(unauthorized_path),
+        "/api/contents/download?file_path={}".format(unauthorized_path),
         headers=auth_header,
     )
 
@@ -212,7 +208,7 @@ def test_download_content_non_existent_path(
     monkeypatch.setattr("os.path.exists", mock_os_path_exists)
 
     response = client.get(
-        "/api/v1/contents/download?file_path={}".format(non_existent_path),
+        "/api/contents/download?file_path={}".format(non_existent_path),
         headers=auth_header,
     )
 
