@@ -15,7 +15,7 @@ class Query(BaseModel):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
-        unique=True,
+        unique=False,
     )
     user = Relationship("User", back_populates="queries")
 
