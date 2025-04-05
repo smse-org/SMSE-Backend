@@ -1,5 +1,5 @@
 from smse_backend.models import BaseModel
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, func
 from sqlalchemy.orm import Relationship
 
 
@@ -9,7 +9,8 @@ class Content(BaseModel):
     id = Column(Integer, primary_key=True, autoincrement=True)
     content_path = Column(String(250), unique=True, nullable=False)
     content_tag = Column(Boolean, default=True)
-
+    upload_date = Column(DateTime, server_default=func.now(), nullable=False)  
+    content_size = Column(Integer, nullable=False)  
     user_id = Column(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
