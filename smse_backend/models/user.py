@@ -4,7 +4,7 @@ from sqlalchemy import Column, Integer, String, DateTime, func,JSON
 from sqlalchemy.orm import Relationship
 from smse_backend.models.base import BaseModel
 
-import re
+import re, os
 
 
 class User(BaseModel):
@@ -34,3 +34,8 @@ class User(BaseModel):
     def check_password(self, password):
         """Check hashed password"""
         return bcrypt.check_password_hash(self.password_hash, password)
+
+    def get_file_extension(self, filename):
+        """Return the file extension for a given filename"""
+        _, ext = os.path.splitext(filename)
+        return ext.lower()  
