@@ -1,6 +1,6 @@
 from smse_backend import bcrypt
 from sqlalchemy.orm import validates
-from sqlalchemy import Column, Integer, String, DateTime, func
+from sqlalchemy import Column, Integer, String, DateTime, func,JSON
 from sqlalchemy.orm import Relationship
 from smse_backend.models.base import BaseModel
 
@@ -15,6 +15,7 @@ class User(BaseModel):
     email = Column(String(150), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
+    preferences = Column(JSON, nullable=True) 
 
     contents = Relationship("Content", back_populates="user", passive_deletes=True)
     queries = Relationship("Query", back_populates="user", passive_deletes=True)
