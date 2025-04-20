@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -40,7 +40,8 @@ def register():
     db.session.add(new_user)
     db.session.commit()
 
-    user_folder_path = os.path.join("user_data", str(new_user.id))
+    user_folder_path = os.path.join(
+    current_app.config["UPLOAD_FOLDER"], str(new_user.id))
     os.makedirs(user_folder_path, exist_ok=True)
 
     return jsonify({"msg": "User created successfully"}), 201
