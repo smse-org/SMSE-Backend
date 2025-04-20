@@ -1,7 +1,8 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from smse_backend.models import User
 from smse_backend import db
+import os, shutil
 
 user_bp = Blueprint("user", __name__)
 
@@ -76,9 +77,15 @@ def delete_user():
     if not user:
         return jsonify({"message": "User not found"}), 404
 
+    user_folder_path = os.path.join(current_app.config["UPLOAD_FOLDER"], str(user.id))
+
     try:
         db.session.delete(user)
         db.session.commit()
+
+        if os.path.exists(user_folder_path):
+            shutil.rmtree(user_folder_path)
+
         return jsonify({"message": "User deleted successfully"}), 200
     except Exception as _:
         db.session.rollback()
