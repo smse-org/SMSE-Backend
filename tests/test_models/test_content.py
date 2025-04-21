@@ -1,3 +1,4 @@
+import datetime
 import pytest
 from smse_backend.models import Content, User
 from sqlalchemy.exc import IntegrityError
@@ -43,6 +44,8 @@ def test_create_content(db_session, sample_user, sample_embedding):
         content_tag=True,
         user_id=sample_user.id,
         embedding_id=sample_embedding.id,
+        content_size=1024,  
+        upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content)
     db_session.commit()
@@ -52,6 +55,8 @@ def test_create_content(db_session, sample_user, sample_embedding):
     assert content.content_tag is True
     assert content.user_id == sample_user.id
     assert content.embedding_id == sample_embedding.id
+    assert content.content_size == 1024
+    assert content.upload_date == datetime.datetime(2023, 10, 1, 12, 0)
 
 
 def test_unique_content_path(db_session, sample_user, sample_embedding):
@@ -61,6 +66,8 @@ def test_unique_content_path(db_session, sample_user, sample_embedding):
         content_tag=True,
         user_id=sample_user.id,
         embedding_id=sample_embedding.id,
+        content_size=1024,  
+        upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content1)
     db_session.commit()
@@ -70,6 +77,8 @@ def test_unique_content_path(db_session, sample_user, sample_embedding):
         content_tag=True,
         user_id=sample_user.id,
         embedding_id=sample_embedding.id,
+        content_size=1024,  
+        upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content2)
 
@@ -84,6 +93,8 @@ def test_user_relationship(db_session, sample_user, sample_embedding):
         content_tag=True,
         user_id=sample_user.id,
         embedding_id=sample_embedding.id,
+        content_size=1024,  
+        upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content)
     db_session.commit()
@@ -99,6 +110,8 @@ def test_cascade_delete(db_session, sample_user, sample_embedding):
         content_tag=True,
         user_id=sample_user.id,
         embedding_id=sample_embedding.id,
+        content_size=1024,  
+        upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content)
     db_session.commit()
@@ -116,6 +129,8 @@ def test_content_tag_default(db_session, sample_user, sample_embedding):
         content_path="/test/path/file.txt",
         user_id=sample_user.id,
         embedding_id=sample_embedding.id,
+        content_size=1024,  
+        upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content)
     db_session.commit()
