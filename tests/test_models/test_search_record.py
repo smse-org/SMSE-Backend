@@ -1,3 +1,4 @@
+import datetime
 import pytest
 from smse_backend.models import SearchRecord, Content, Query, User, Embedding
 from sqlalchemy.exc import IntegrityError
@@ -41,6 +42,8 @@ def sample_content(db_session, sample_user, sample_embedding):
         content_tag=True,
         user_id=sample_user.id,
         embedding_id=sample_embedding.id,
+        content_size=1024,
+        upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content)
     db_session.commit()
