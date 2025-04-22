@@ -42,18 +42,26 @@ def create_content():
         return jsonify({"msg": "No selected file"}), 400
 
     if file and allowed_file(file.filename):
-        # Secure the filename and add a random UUID
+        # Get size from in-memory stream BEFORE saving
+        file_stream = file.stream
+        file_stream.seek(0, os.SEEK_END)
+        file_size_bytes = file_stream.tell()  # size in bytes
+        file_stream.seek(0)  # reset stream for future use
+        file_size_kb = round(file_size_bytes / 1024, 2)
+
         filename = secure_filename(file.filename)
         unique_filename = f"{uuid.uuid4().hex}_{filename}"
         file_path = os.path.join(str(current_user_id), unique_filename)
-        file.save(get_full_path(file_path))
+        full_path = get_full_path(file_path)
+
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        file.save(full_path)
 
         try:
             # Get user chosen model
             model_id = db.session.get(
                 Model, 1
             ).id  # TODO: Allow user to choose model (handle user settings)
-
             # Create embedding vector from content
             embedding_vector = create_embedding_from_path(get_full_path(file_path))
             if embedding_vector is None:
@@ -72,6 +80,7 @@ def create_content():
                 content_tag=True,
                 user_id=current_user_id,
                 embedding=new_embedding,
+                content_size=file_size_kb,
             )
             db.session.add(new_content)
             db.session.commit()
@@ -84,6 +93,8 @@ def create_content():
                             "id": new_content.id,
                             "content_path": new_content.content_path,
                             "content_tag": new_content.content_tag,
+                            "content_size": new_content.content_size,
+                            "upload_date": new_content.upload_date,
                         },
                     }
                 ),
