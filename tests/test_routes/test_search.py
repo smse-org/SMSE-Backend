@@ -1,3 +1,4 @@
+import datetime
 import pytest
 from flask_jwt_extended import create_access_token
 from smse_backend.models import Query, SearchRecord, User, Content, Embedding, Model
@@ -22,6 +23,8 @@ def sample_content(db_session, sample_user, sample_embedding):
         content_tag=True,
         user_id=sample_user.id,
         embedding_id=sample_embedding.id,
+        content_size=1024,  
+        upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content)
     db_session.commit()
@@ -36,6 +39,8 @@ def sample_content2(db_session, sample_user, sample_embedding2):
         content_tag=True,
         user_id=sample_user.id,
         embedding_id=sample_embedding2.id,
+        content_size=1024,  
+        upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content)
     db_session.commit()

@@ -1,3 +1,4 @@
+import datetime
 import pytest
 from smse_backend.models import Embedding, Model, User
 from sqlalchemy.exc import IntegrityError
@@ -52,6 +53,8 @@ def test_embedding_relationships(db_session, sample_embedding, sample_user):
         content_tag=True,
         embedding_id=sample_embedding.id,
         user_id=sample_user.id,
+        content_size=1024,  
+        upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
 
     query = Query(
