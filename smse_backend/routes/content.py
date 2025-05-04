@@ -160,6 +160,8 @@ def get_content(content_id):
                     "id": content.id,
                     "content_path": content.content_path,
                     "content_tag": content.content_tag,
+                    "content_size": content.content_size,
+                    "upload_date": content.upload_date,
                 }
             }
         ),
