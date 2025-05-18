@@ -8,7 +8,7 @@ class Embedding(BaseModel):
     __tablename__ = "embeddings"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    vector = mapped_column(Vector(328), unique=True, nullable=False)
+    vector = mapped_column(Vector(1024), nullable=True)
 
     content = Relationship("Content", back_populates="embedding")
     query = Relationship("Query", back_populates="embedding")

@@ -9,8 +9,8 @@ class Content(BaseModel):
     id = Column(Integer, primary_key=True, autoincrement=True)
     content_path = Column(String(250), unique=True, nullable=False)
     content_tag = Column(Boolean, default=True)
-    upload_date = Column(DateTime, server_default=func.now(), nullable=False)  
-    content_size = Column(Integer, nullable=False)  
+    upload_date = Column(DateTime, server_default=func.now(), nullable=False)
+    content_size = Column(Integer, nullable=False)
     user_id = Column(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -23,7 +23,7 @@ class Content(BaseModel):
     embedding_id = Column(
         Integer,
         ForeignKey("embeddings.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
         index=True,
         unique=True,
     )
@@ -34,3 +34,5 @@ class Content(BaseModel):
     search_records = Relationship(
         "SearchRecord", back_populates="content", passive_deletes=True
     )
+
+    tasks = Relationship("Task", back_populates="content", passive_deletes=True)

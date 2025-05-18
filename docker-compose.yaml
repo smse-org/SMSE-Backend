@@ -11,6 +11,14 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
   pgadmin:
     image: dpage/pgadmin4
     restart: unless-stopped
@@ -22,19 +30,40 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
 
-  web:
-    build: .
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: smse-backend:latest
     restart: unless-stopped
     ports:
       - "5000:5000"
     depends_on:
       - db
+      - redis
     env_file:
       - .env
+    volumes:
+      - ./tmp:/app/tmp
+      - ./.checkpoints:/app/.checkpoints
+
+  worker:
+    image: smse-backend:latest
+    restart: unless-stopped
+    command: celery -A smse_backend.celery_worker.celery worker --loglevel=info
+    depends_on:
+      - db
+      - redis
+      - backend
+    env_file:
+      - .env
+    volumes:
+      - ./tmp:/app/tmp
+      - ./.checkpoints:/app/.checkpoints
 
   migrate:
-    build: .
-    command: ["poetry", "run", "flask", "db", "upgrade"]
+    image: smse-backend:latest
+    command: flask db upgrade
     volumes:
       - ./migrations:/app/migrations
     depends_on:
@@ -46,3 +75,4 @@ services:
 
 volumes:
   db_data:
+  redis_data:

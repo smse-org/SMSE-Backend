@@ -53,5 +53,10 @@ def create_app(config_name="DevelopmentConfig"):
 
     register_blueprints(app)
     app.register_blueprint(swaggerui_blueprint)
+    
+    # Initialize Celery
+    from smse_backend.celery_app import make_celery
+    celery = make_celery(app)
+    app.celery = celery
 
     return app

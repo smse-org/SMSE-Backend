@@ -25,3 +25,10 @@ class BaseConfig:
     # File upload configurations
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB max file size
     UPLOAD_FOLDER = "./tmp/uploads"
+    
+    # Celery configurations
+    CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+    CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
+    
+    # SMSE configurations
+    SMSE_CHECKPOINTS_PATH = os.environ.get("SMSE_CHECKPOINTS_PATH", "./.checkpoints")

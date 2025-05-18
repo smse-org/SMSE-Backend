@@ -1,15 +1,18 @@
-import numpy as np
+from smse_backend.tasks import process_file
 
 
-def create_embedding_from_path(path: str) -> np.ndarray | None:
+def schedule_embedding_task(file_path: str, content_id: int = None):
     """
-    create an embedding from a file path
-    """
-    return np.random.rand(328)
+    Schedule a Celery task to create an embedding for a file.
 
+    Args:
+        file_path (str): Path to the file
+        user_id (int): User ID
+        content_id (int, optional): Content ID if already exists
 
-def create_embedding(data: str) -> np.ndarray | None:
+    Returns:
+        str: Task ID
     """
-    create an embedding from data
-    """
-    return np.random.rand(328)
+    # Schedule the Celery task
+    task = process_file.delay(file_path, content_id)
+    return task.id

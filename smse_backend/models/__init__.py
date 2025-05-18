@@ -5,3 +5,4 @@ from .query import Query
 from .search_record import SearchRecord
 from .model import Model
 from .embedding import Embedding
+from .task import Task

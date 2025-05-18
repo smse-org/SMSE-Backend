@@ -2,8 +2,7 @@ from flask import Blueprint, request, jsonify, current_app, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from smse_backend import db
-from smse_backend.models import Content, Embedding, Model
-from smse_backend.services import create_embedding_from_path
+from smse_backend.models import Content
 import os
 import uuid
 
@@ -58,31 +57,31 @@ def create_content():
         file.save(full_path)
 
         try:
-            # Get user chosen model
-            model_id = db.session.get(
-                Model, 1
-            ).id  # TODO: Allow user to choose model (handle user settings)
-            # Create embedding vector from content
-            embedding_vector = create_embedding_from_path(get_full_path(file_path))
-            if embedding_vector is None:
-                return jsonify({"message": "Error creating embedding for content"}), 500
-
-            # Create new embedding record
-            new_embedding = Embedding(
-                vector=embedding_vector,
-                model_id=model_id,
-            )
-            db.session.add(new_embedding)
-
-            # Create new content record
+            # Create new content record WITHOUT embedding
             new_content = Content(
                 content_path=file_path,
                 content_tag=True,
                 user_id=current_user_id,
-                embedding=new_embedding,
+                embedding=None,
                 content_size=file_size_kb,
             )
             db.session.add(new_content)
+            db.session.commit()
+
+            # Schedule the Celery task for processing the file
+            from smse_backend.services.embedding import schedule_embedding_task
+            from smse_backend.models.task import Task
+
+            task_id = schedule_embedding_task(get_full_path(file_path), new_content.id)
+
+            # Create a new task record
+            new_task = Task(
+                task_id=task_id,
+                status="PENDING",
+                content_id=new_content.id,
+                user_id=current_user_id,
+            )
+            db.session.add(new_task)
             db.session.commit()
 
             return (
@@ -96,6 +95,7 @@ def create_content():
                             "content_size": new_content.content_size,
                             "upload_date": new_content.upload_date,
                         },
+                        "task_id": task_id,
                     }
                 ),
                 201,
