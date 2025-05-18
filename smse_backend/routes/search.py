@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from smse_backend import db
 from smse_backend.models import Query, SearchRecord, Embedding, Model
-from smse_backend.services import create_embedding, search
+from smse_backend.services import search
 
 search_bp = Blueprint("search", __name__)
 
