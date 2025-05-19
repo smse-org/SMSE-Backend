@@ -124,6 +124,8 @@ def get_all_contents():
                         "id": content.id,
                         "content_path": content.content_path,
                         "content_tag": content.content_tag,
+                        "content_size": content.content_size,
+                        "upload_date": content.upload_date,
                     }
                     for content in contents
                 ]
@@ -158,6 +160,8 @@ def get_content(content_id):
                     "id": content.id,
                     "content_path": content.content_path,
                     "content_tag": content.content_tag,
+                    "content_size": content.content_size,
+                    "upload_date": content.upload_date,
                 }
             }
         ),
@@ -177,8 +181,17 @@ def update_content(content_id):
     data = request.get_json()
 
     try:
+        if "content_path" in data:
+            content.content_path = data["content_path"]
+
         if "content_tag" in data:
             content.content_tag = data["content_tag"]
+
+        if "content_size" in data:
+            content.content_size = data["content_size"]
+
+        if "upload_date" in data:
+            content.upload_date = data["upload_date"]  # Ensure this is in the correct datetime format
 
         db.session.commit()
         return (
@@ -189,6 +202,8 @@ def update_content(content_id):
                         "id": content.id,
                         "content_path": content.content_path,
                         "content_tag": content.content_tag,
+                        "content_size": content.content_size,
+                        "upload_date": content.upload_date,
                     },
                 }
             ),
