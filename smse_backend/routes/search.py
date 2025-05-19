@@ -9,6 +9,7 @@ from smse_backend import db
 from smse_backend.models import Query, SearchRecord, Embedding, Model, Content
 from smse_backend.services.search import search
 from smse_backend.services.embedding import generate_query_embedding
+from smse_backend.utils.file_extensions import EXTENSION_TO_MODALITY
 
 search_bp = Blueprint("search", __name__)
 
@@ -36,7 +37,9 @@ def search_files():
             return jsonify({"message": "Query text is required"}), 400
 
         # Generate query embedding
-        query_embedding = generate_query_embedding(query_text=query_text)
+        query_embedding, query_modality = generate_query_embedding(
+            query_text=query_text
+        )
         query_type = "text"
         query_content = query_text
 
@@ -48,30 +51,13 @@ def search_files():
             return jsonify({"message": "No selected file"}), 400
 
         # Validate file type by extension
-        allowed_extensions = {
-            # Images
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".gif",
-            ".webp",
-            # Audio
-            ".mp3",
-            ".wav",
-            ".ogg",
-            ".flac",
-            # Text
-            ".txt",
-            ".md",
-            ".pdf",
-        }
         file_ext = os.path.splitext(file.filename)[1].lower()
 
-        if file_ext not in allowed_extensions:
+        if file_ext not in EXTENSION_TO_MODALITY:
             return (
                 jsonify(
                     {
-                        "message": f"Unsupported file type. Allowed types: {', '.join(allowed_extensions)}"
+                        "message": f"Unsupported file type. Allowed types: {', '.join(EXTENSION_TO_MODALITY.keys())}"
                     }
                 ),
                 400,
@@ -89,7 +75,9 @@ def search_files():
 
         try:
             # Generate query embedding
-            query_embedding = generate_query_embedding(query_file=full_path)
+            query_embedding, query_modality = generate_query_embedding(
+                query_file=full_path
+            )
             query_type = "file"
             query_content = file.filename
         except Exception as e:
@@ -116,6 +104,7 @@ def search_files():
         new_embedding = Embedding(
             vector=query_embedding,
             model_id=model_id,
+            modality=query_modality,
         )
         db.session.add(new_embedding)
 
@@ -130,7 +119,10 @@ def search_files():
 
         # Perform the search using the embedding with pagination
         search_results = search(
-            query_embedding, threshold=0.1, limit=limit, offset=offset
+            query_embedding,
+            threshold=0.1,
+            limit=limit,
+            offset=offset,
         )
 
         # Store search results

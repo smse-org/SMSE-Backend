@@ -28,7 +28,7 @@ def generate_query_embedding(query_text: str = None, query_file: str = None):
         query_file (str, optional): Path to a query file
 
     Returns:
-        np.ndarray: The generated embedding vector
+        tuple: (np.ndarray, str) - The generated embedding vector and modality
         None: If there was an error
     """
     if query_text is not None:
@@ -37,8 +37,8 @@ def generate_query_embedding(query_text: str = None, query_file: str = None):
         result = task.get(timeout=30)  # Wait for completion with a timeout
 
         if result.get("status") == "success":
-            return np.array(result.get("embedding"))
-        return None
+            return np.array(result.get("embedding")), result.get("modality", "text")
+        return None, None
 
     elif query_file is not None:
         # Process file query with high priority
@@ -46,7 +46,7 @@ def generate_query_embedding(query_text: str = None, query_file: str = None):
         result = task.get(timeout=30)  # Wait for completion with a timeout
 
         if result.get("status") == "success":
-            return np.array(result.get("embedding"))
-        return None
+            return np.array(result.get("embedding")), result.get("modality", "text")
+        return None, None
 
-    return None
+    return None, None
