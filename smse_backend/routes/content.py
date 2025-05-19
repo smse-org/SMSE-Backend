@@ -3,19 +3,11 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from smse_backend import db
 from smse_backend.models import Content
+from smse_backend.utils.file_extensions import is_allowed_file
 import os
 import uuid
 
-ALLOWED_EXTENSIONS = set(
-    os.getenv("ALLOWED_EXTENSIONS", "txt,pdf,png,jpg,jpeg,gif,md").split(",")
-)
-
 content_bp = Blueprint("content", __name__)
-
-
-def allowed_file(filename):
-    """Check if file extension is allowed"""
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def get_first_directory(path):
@@ -40,7 +32,7 @@ def create_content():
     if file.filename == "":
         return jsonify({"msg": "No selected file"}), 400
 
-    if file and allowed_file(file.filename):
+    if file and is_allowed_file(file.filename):
         # Get size from in-memory stream BEFORE saving
         file_stream = file.stream
         file_stream.seek(0, os.SEEK_END)
@@ -227,8 +219,11 @@ def delete_content(content_id):
 
 
 @content_bp.route("/contents/allowed_extensions", methods=["GET"])
-def get_allowed_extensions():
-    return jsonify({"allowed_extensions": list(ALLOWED_EXTENSIONS)}), 200
+def get_allowed_extensions_endpoint():
+    """Get the list of allowed file extensions."""
+    from smse_backend.utils.file_extensions import get_allowed_extensions
+
+    return jsonify({"allowed_extensions": get_allowed_extensions()}), 200
 
 
 @content_bp.route("/contents/download", methods=["GET"])

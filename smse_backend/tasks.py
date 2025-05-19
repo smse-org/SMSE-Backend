@@ -2,7 +2,6 @@
 This module contains Celery tasks for processing files with SMSE.
 """
 
-import os
 from pathlib import Path
 from celery import shared_task
 
@@ -78,7 +77,7 @@ def _initialize_model():
         )
 
 
-def _get_modality_for_file(file_path):
+def _get_smse_modality_for_file(file_path):
     """
     Determine the modality based on the file extension.
 
@@ -88,22 +87,17 @@ def _get_modality_for_file(file_path):
     Returns:
         Modality: The determined modality
     """
-    ext = os.path.splitext(file_path)[1].lower()
+    from smse_backend.utils.file_extensions import get_modality_from_extension
 
-    # Image files
-    if ext in [".jpg", ".jpeg", ".png", ".gif", ".webp"]:
+    modality_str = get_modality_from_extension(file_path)
+
+    # Convert string modality to Modality enum
+    if modality_str == "image":
         return Modality.IMAGE
-
-    # Audio files
-    elif ext in [".mp3", ".wav", ".ogg", ".flac"]:
+    elif modality_str == "audio":
         return Modality.AUDIO
-
-    # Text files
-    elif ext in [".txt", ".md", ".pdf"]:
+    else:
         return Modality.TEXT
-
-    # Default to text for unknown types
-    return Modality.TEXT
 
 
 def _process_file(file_path, modality):
@@ -126,10 +120,7 @@ def _process_file(file_path, modality):
     elif modality == Modality.AUDIO:
         processed_input = _audio_pipeline([path])
     elif modality == Modality.TEXT:
-        # For text files, we need to read the content first
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-            content = f.read()
-        processed_input = _text_pipeline.process([content])
+        processed_input = _text_pipeline([path])
     else:
         raise ValueError(f"Unsupported modality: {modality}")
 
@@ -183,7 +174,7 @@ def process_file(self, file_path, content_id=None):
     """
     try:
         # Determine the modality based on file extension
-        modality = _get_modality_for_file(file_path)
+        modality = _get_smse_modality_for_file(file_path)
 
         # Process the file to get embedding vector
         embedding_vector = _process_file(file_path, modality)
@@ -214,6 +205,7 @@ def process_file(self, file_path, content_id=None):
         new_embedding = Embedding(
             vector=embedding_vector,
             model_id=model_id,
+            modality=modality.name.lower(),
         )
         db.session.add(new_embedding)
 
@@ -277,16 +269,19 @@ def process_query(self, query_content, is_file=False, file_path=None):
     try:
         if is_file:
             # Determine the modality based on file extension
-            modality = _get_modality_for_file(file_path)
+            modality = _get_smse_modality_for_file(file_path)
             # Process the file to get embedding vector
             embedding_vector = _process_file(file_path, modality)
+            modality_str = modality.name.lower()  # Convert enum to string
         else:
             # Process the text directly
             embedding_vector = _process_text(query_content)
+            modality_str = "text"  # Text queries always have text modality
 
         return {
             "status": "success",
             "embedding": embedding_vector.tolist(),  # Convert numpy array to list for JSON serialization
+            "modality": modality_str,  # Include modality information
         }
 
     except Exception as e:
