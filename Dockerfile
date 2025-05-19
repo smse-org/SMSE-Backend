@@ -1,7 +1,7 @@
 # Use a multi-stage build to reduce image size
 
 # Builder stage for dependencies
-FROM python:3.10-slim as builder
+FROM python:3.10-slim AS builder
 
 # Install system dependencies required for building Python packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
