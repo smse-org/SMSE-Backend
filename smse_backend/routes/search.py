@@ -25,7 +25,10 @@ def search_files():
 
     # Extract pagination parameters
     limit = int(request.args.get("limit", 10))
-    offset = int(request.args.get("offset", 0))
+    modalities = request.args.getlist("modalities")
+
+    if not modalities:
+        modalities = ["text", "image", "audio"]
 
     # Check if it's a text query or a file upload
     if request.is_json:
@@ -118,12 +121,7 @@ def search_files():
         db.session.commit()
 
         # Perform the search using the embedding with pagination
-        search_results = search(
-            query_embedding,
-            threshold=0.1,
-            limit=limit,
-            offset=offset,
-        )
+        search_results = search(query_embedding, limit=limit, modalities=modalities)
 
         # Store search results
         for result in search_results:
@@ -155,17 +153,6 @@ def search_files():
                     }
                 )
 
-        # Get total count for pagination info
-        total_count_query = text(
-            """
-            SELECT COUNT(*)
-            FROM contents c
-            JOIN embeddings e ON c.embedding_id = e.id
-            WHERE e.vector IS NOT NULL
-        """
-        )
-        total_count = db.session.execute(total_count_query).scalar()
-
         return (
             jsonify(
                 {
@@ -174,10 +161,7 @@ def search_files():
                     "query_type": query_type,
                     "results": detailed_results,
                     "pagination": {
-                        "total": total_count,
                         "limit": limit,
-                        "offset": offset,
-                        "has_more": (offset + limit) < total_count,
                     },
                 }
             ),

@@ -1010,7 +1010,7 @@
     "/api/search": {
       "post": {
         "summary": "Search Files",
-        "description": "Search for files based on a query string or file upload.",
+        "description": "Search for files based on a query string or file upload. Supports multimodal search with filtering by modality.",
         "operationId": "searchFiles",
         "tags": [
           "Search"
@@ -1032,14 +1032,19 @@
             "description": "Maximum number of results to return"
           },
           {
-            "name": "offset",
+            "name": "modalities",
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer",
-              "default": 0
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["text", "image", "audio"]
+              }
             },
-            "description": "Number of results to skip (for pagination)"
+            "description": "Filter results by specific modalities",
+            "style": "form",
+            "explode": true
           }
         ],
         "requestBody": {
@@ -1074,7 +1079,7 @@
           }
         },
         "responses": {
-          "201": {
+          "200": {
             "description": "Search completed successfully.",
             "content": {
               "application/json": {
@@ -1111,13 +1116,18 @@
                             "example": "path/to/file.pdf"
                           },
                           "content_tag": {
-                            "type": "string",
-                            "example": "document"
+                            "type": "boolean",
+                            "example": true
                           },
                           "similarity_score": {
                             "type": "number",
                             "format": "float",
                             "example": 0.89
+                          },
+                          "modality": {
+                            "type": "string",
+                            "enum": ["text", "image", "audio"],
+                            "example": "text"
                           }
                         }
                       }
@@ -1125,21 +1135,9 @@
                     "pagination": {
                       "type": "object",
                       "properties": {
-                        "total": {
-                          "type": "integer",
-                          "example": 45
-                        },
                         "limit": {
                           "type": "integer",
                           "example": 10
-                        },
-                        "offset": {
-                          "type": "integer",
-                          "example": 0
-                        },
-                        "has_more": {
-                          "type": "boolean",
-                          "example": true
                         }
                       }
                     }

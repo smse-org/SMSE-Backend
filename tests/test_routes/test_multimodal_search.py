@@ -101,10 +101,7 @@ def test_text_search(client, auth_header, sample_content_with_embedding):
     assert "pagination" in json_data
 
     # Verify pagination
-    assert "total" in json_data["pagination"]
     assert "limit" in json_data["pagination"]
-    assert "offset" in json_data["pagination"]
-    assert "has_more" in json_data["pagination"]
 
 
 def test_text_search_with_pagination(
@@ -113,15 +110,12 @@ def test_text_search_with_pagination(
     """Test searching with text query and pagination."""
     # Search for content with pagination
     data = {"query": "test query"}
-    response = client.post(
-        "/api/search?limit=5&offset=0", headers=auth_header, json=data
-    )
+    response = client.post("/api/search?limit=5", headers=auth_header, json=data)
 
     # Verify response
     assert response.status_code == 200
     json_data = response.json
     assert json_data["pagination"]["limit"] == 5
-    assert json_data["pagination"]["offset"] == 0
 
 
 def test_file_search(client, auth_header, sample_content_with_embedding, tmp_path):

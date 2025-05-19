@@ -3,7 +3,7 @@ from flask import current_app
 from sqlalchemy.sql import text
 from smse_backend import db
 import math
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 def softmax(scores: List[float]) -> List[float]:
@@ -73,10 +73,6 @@ def search_by_modality(
     try:
         # Convert the embedding to a string format compatible with pgvector
         embedding_str = ",".join(map(str, query_embedding))
-
-        current_app.logger.debug(
-            f"{modality} search with embedding: {embedding_str[:50]}..."
-        )
 
         # Use raw SQL with pgvector for similarity search, filtering by modality
         sql = text(
