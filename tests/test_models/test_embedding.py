@@ -20,7 +20,7 @@ def sample_model(db_session):
 @pytest.fixture
 def sample_embedding(db_session, sample_model):
     """Create a sample embedding for testing"""
-    embedding = Embedding(vector=np.random.rand(328), model_id=sample_model.id)
+    embedding = Embedding(vector=np.random.rand(1024), model_id=sample_model.id)
     db_session.add(embedding)
     db_session.commit()
     return embedding
@@ -38,7 +38,7 @@ def sample_user(db_session):
 
 def test_create_embedding(db_session, sample_model):
     """Test embedding creation with valid data"""
-    embedding = Embedding(vector=np.random.rand(328), model_id=sample_model.id)
+    embedding = Embedding(vector=np.random.rand(1024), model_id=sample_model.id)
     db_session.add(embedding)
     db_session.commit()
 
@@ -53,7 +53,7 @@ def test_embedding_relationships(db_session, sample_embedding, sample_user):
         content_tag=True,
         embedding_id=sample_embedding.id,
         user_id=sample_user.id,
-        content_size=1024,  
+        content_size=1024,
         upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
 
@@ -71,9 +71,9 @@ def test_embedding_relationships(db_session, sample_embedding, sample_user):
     assert query.embedding == sample_embedding
 
 
-def test_unique_vector_constraint(db_session, sample_model):
-    """Test unique vector constraint"""
-    vector = np.random.rand(328)
+def test_non_unique_vector_constraint(db_session, sample_model):
+    """Test non unique vector constraint"""
+    vector = np.random.rand(1024)
     embedding1 = Embedding(vector=vector, model_id=sample_model.id)
     db_session.add(embedding1)
     db_session.commit()
@@ -81,8 +81,7 @@ def test_unique_vector_constraint(db_session, sample_model):
     embedding2 = Embedding(vector=vector, model_id=sample_model.id)
     db_session.add(embedding2)
 
-    with pytest.raises(IntegrityError):
-        db_session.commit()
+    assert db_session.commit() is None
 
 
 def test_embedding_model_relationship(db_session, sample_embedding, sample_model):

@@ -143,6 +143,31 @@ def _process_file(file_path, modality):
     return embeddings[modality][0].cpu().numpy()
 
 
+def _process_text(text_content):
+    """
+    Process raw text content and generate an embedding.
+
+    Args:
+        text_content (str): The text content to process
+
+    Returns:
+        np.ndarray: The embedding vector
+    """
+    _initialize_model()
+
+    # Process the text directly
+    processed_input = _text_pipeline.process([text_content])
+
+    # Create inputs dictionary with only the TEXT modality
+    inputs = {Modality.TEXT: processed_input}
+
+    # Get embeddings
+    embeddings = _model.encode(inputs)
+
+    # Return the first embedding vector
+    return embeddings[Modality.TEXT][0].cpu().numpy()
+
+
 @shared_task(bind=True, name="process_file")
 def process_file(self, file_path, content_id=None):
     """
@@ -216,6 +241,52 @@ def process_file(self, file_path, content_id=None):
             "embedding_id": new_embedding.id,
             "content_id": content_id,
             "modality": modality.name,
+        }
+
+    except Exception as e:
+        # If there was an error, update the task state
+        self.update_state(
+            state="FAILURE",
+            meta={
+                "exc_type": type(e).__name__,
+                "exc_message": str(e),
+                "status": "error",
+                "message": str(e),
+            },
+        )
+        # Re-raise the exception
+        raise e
+
+
+@shared_task(
+    bind=True, name="process_query", priority=10
+)  # Higher priority than content processing
+def process_query(self, query_content, is_file=False, file_path=None):
+    """
+    Celery task to process a search query with high priority.
+    Can handle both text queries and file-based queries.
+
+    Args:
+        query_content (str): The query text or file path
+        is_file (bool): Whether the query is a file
+        file_path (str, optional): Path to the file if is_file is True
+
+    Returns:
+        dict: Task result with the embedding vector
+    """
+    try:
+        if is_file:
+            # Determine the modality based on file extension
+            modality = _get_modality_for_file(file_path)
+            # Process the file to get embedding vector
+            embedding_vector = _process_file(file_path, modality)
+        else:
+            # Process the text directly
+            embedding_vector = _process_text(query_content)
+
+        return {
+            "status": "success",
+            "embedding": embedding_vector.tolist(),  # Convert numpy array to list for JSON serialization
         }
 
     except Exception as e:

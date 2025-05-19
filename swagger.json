@@ -1010,7 +1010,7 @@
     "/api/search": {
       "post": {
         "summary": "Search Files",
-        "description": "Search for files based on a query string.",
+        "description": "Search for files based on a query string or file upload.",
         "operationId": "searchFiles",
         "tags": [
           "Search"
@@ -1018,6 +1018,28 @@
         "security": [
           {
             "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "Maximum number of results to return"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "description": "Number of results to skip (for pagination)"
           }
         ],
         "requestBody": {
@@ -1035,6 +1057,18 @@
                 "required": [
                   "query"
                 ]
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "File to search similar content for"
+                  }
+                }
               }
             }
           }
@@ -1055,6 +1089,14 @@
                       "type": "integer",
                       "example": 12345
                     },
+                    "query_type": {
+                      "type": "string",
+                      "enum": [
+                        "text",
+                        "file"
+                      ],
+                      "example": "text"
+                    },
                     "results": {
                       "type": "array",
                       "items": {
@@ -1064,11 +1106,40 @@
                             "type": "integer",
                             "example": 6789
                           },
+                          "content_path": {
+                            "type": "string",
+                            "example": "path/to/file.pdf"
+                          },
+                          "content_tag": {
+                            "type": "string",
+                            "example": "document"
+                          },
                           "similarity_score": {
                             "type": "number",
                             "format": "float",
                             "example": 0.89
                           }
+                        }
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer",
+                          "example": 45
+                        },
+                        "limit": {
+                          "type": "integer",
+                          "example": 10
+                        },
+                        "offset": {
+                          "type": "integer",
+                          "example": 0
+                        },
+                        "has_more": {
+                          "type": "boolean",
+                          "example": true
                         }
                       }
                     }
@@ -1078,7 +1149,7 @@
             }
           },
           "400": {
-            "description": "Bad request. Query text is required.",
+            "description": "Bad request. Query text or file is required.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1086,7 +1157,7 @@
                   "properties": {
                     "message": {
                       "type": "string",
-                      "example": "Query text is required"
+                      "example": "Either query text or file is required"
                     }
                   }
                 }
@@ -1123,28 +1194,76 @@
             "bearerAuth": []
           }
         ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "Maximum number of queries to return"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "description": "Number of queries to skip (for pagination)"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successfully retrieved query history.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "integer",
-                        "example": 123
-                      },
-                      "text": {
-                        "type": "string",
-                        "example": "example search query"
-                      },
-                      "timestamp": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2025-03-03T12:34:56Z"
+                  "type": "object",
+                  "properties": {
+                    "queries": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "example": 123
+                          },
+                          "text": {
+                            "type": "string",
+                            "example": "example search query"
+                          },
+                          "timestamp": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2025-03-03T12:34:56Z"
+                          }
+                        }
+                      }
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer",
+                          "example": 45
+                        },
+                        "limit": {
+                          "type": "integer",
+                          "example": 10
+                        },
+                        "offset": {
+                          "type": "integer",
+                          "example": 0
+                        },
+                        "has_more": {
+                          "type": "boolean",
+                          "example": true
+                        }
                       }
                     }
                   }

@@ -37,7 +37,7 @@ def sample_model(db_session):
 @pytest.fixture
 def sample_embedding(db_session, sample_model, sample_user):
     """Create a sample embedding for testing."""
-    embedding = Embedding(vector=np.random.rand(328), model_id=sample_model.id)
+    embedding = Embedding(vector=np.random.rand(1024), model_id=sample_model.id)
     db_session.add(embedding)
     db_session.commit()
     return embedding
@@ -72,6 +72,8 @@ def test_create_content(client, auth_header, sample_user, sample_model):
 
     assert response.status_code == 201
     assert response.json["message"] == "Content created successfully"
+    assert "task_id" in response.json
+    assert response.json["task_id"] == "mocked-task-id-12345"  # Match the mock ID
 
 
 def test_get_all_contents(client, auth_header, sample_content):
