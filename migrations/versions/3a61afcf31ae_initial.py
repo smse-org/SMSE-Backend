@@ -1,7 +1,7 @@
 """initial
 
 Revision ID: 3a61afcf31ae
-Revises: 
+Revises:
 Create Date: 2024-12-13 01:42:18.194463
 
 """
@@ -28,6 +28,10 @@ def upgrade():
         sa.Column("modality", sa.Integer(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
+
+    # Insert the imagebind model
+    op.execute("INSERT INTO models (model_name, modality) VALUES ('imagebind', 3)")
+
     op.create_table(
         "users",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
