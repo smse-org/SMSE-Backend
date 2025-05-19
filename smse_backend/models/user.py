@@ -19,6 +19,7 @@ class User(BaseModel):
 
     contents = Relationship("Content", back_populates="user", passive_deletes=True)
     queries = Relationship("Query", back_populates="user", passive_deletes=True)
+    tasks = Relationship("Task", back_populates="user", passive_deletes=True)
 
     @validates("email")
     def validate_email(self, key, email):

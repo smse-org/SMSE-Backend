@@ -22,3 +22,10 @@ class TestConfig(BaseConfig):
         raise ValueError(
             "Unsupported database type. Use either 'sqlite' or 'postgres'."
         )
+
+    # Use memory for Celery in tests
+    CELERY_BROKER_URL = "memory://"
+    CELERY_RESULT_BACKEND = "memory://"
+    CELERY_ALWAYS_EAGER = (
+        True  # Tasks will be executed locally instead of being sent to the queue
+    )

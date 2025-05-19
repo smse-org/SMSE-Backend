@@ -21,7 +21,7 @@ def sample_model(db_session):
 @pytest.fixture
 def sample_embedding(db_session, sample_model):
     """Create a sample embedding for testing"""
-    embedding = Embedding(vector=np.random.rand(328), model_id=sample_model.id)
+    embedding = Embedding(vector=np.random.rand(1024), model_id=sample_model.id)
     db_session.add(embedding)
     db_session.commit()
     return embedding
@@ -44,7 +44,7 @@ def test_create_content(db_session, sample_user, sample_embedding):
         content_tag=True,
         user_id=sample_user.id,
         embedding_id=sample_embedding.id,
-        content_size=1024,  
+        content_size=1024,
         upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content)
@@ -66,7 +66,7 @@ def test_unique_content_path(db_session, sample_user, sample_embedding):
         content_tag=True,
         user_id=sample_user.id,
         embedding_id=sample_embedding.id,
-        content_size=1024,  
+        content_size=1024,
         upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content1)
@@ -77,7 +77,7 @@ def test_unique_content_path(db_session, sample_user, sample_embedding):
         content_tag=True,
         user_id=sample_user.id,
         embedding_id=sample_embedding.id,
-        content_size=1024,  
+        content_size=1024,
         upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content2)
@@ -93,7 +93,7 @@ def test_user_relationship(db_session, sample_user, sample_embedding):
         content_tag=True,
         user_id=sample_user.id,
         embedding_id=sample_embedding.id,
-        content_size=1024,  
+        content_size=1024,
         upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content)
@@ -110,7 +110,7 @@ def test_cascade_delete(db_session, sample_user, sample_embedding):
         content_tag=True,
         user_id=sample_user.id,
         embedding_id=sample_embedding.id,
-        content_size=1024,  
+        content_size=1024,
         upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content)
@@ -129,7 +129,7 @@ def test_content_tag_default(db_session, sample_user, sample_embedding):
         content_path="/test/path/file.txt",
         user_id=sample_user.id,
         embedding_id=sample_embedding.id,
-        content_size=1024,  
+        content_size=1024,
         upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content)

@@ -18,7 +18,7 @@ def sample_model(db_session):
 @pytest.fixture
 def sample_embedding(db_session, sample_model):
     """Create a sample embedding for testing"""
-    embedding = Embedding(vector=np.random.rand(328), model_id=sample_model.id)
+    embedding = Embedding(vector=np.random.rand(1024), model_id=sample_model.id)
     db_session.add(embedding)
     db_session.commit()
     return embedding

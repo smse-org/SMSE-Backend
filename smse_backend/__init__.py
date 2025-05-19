@@ -54,4 +54,16 @@ def create_app(config_name="DevelopmentConfig"):
     register_blueprints(app)
     app.register_blueprint(swaggerui_blueprint)
 
+    # Initialize Celery
+    from smse_backend.celery_app import make_celery
+
+    celery = make_celery(app)
+    app.celery = celery
+
+    # Schedule cleanup job for temporary query files
+    with app.app_context():
+        from smse_backend.services.file_cleanup import schedule_cleanup_job
+
+        schedule_cleanup_job()
+
     return app

@@ -23,7 +23,7 @@ def sample_content(db_session, sample_user, sample_embedding):
         content_tag=True,
         user_id=sample_user.id,
         embedding_id=sample_embedding.id,
-        content_size=1024,  
+        content_size=1024,
         upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content)
@@ -39,7 +39,7 @@ def sample_content2(db_session, sample_user, sample_embedding2):
         content_tag=True,
         user_id=sample_user.id,
         embedding_id=sample_embedding2.id,
-        content_size=1024,  
+        content_size=1024,
         upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content)
@@ -66,7 +66,7 @@ def auth_header(client, sample_user):
 @pytest.fixture
 def sample_embedding(db_session, sample_model):
     """Create a sample embedding for testing."""
-    embedding = Embedding(vector=np.random.rand(328), model_id=sample_model.id)
+    embedding = Embedding(vector=np.random.rand(1024), model_id=sample_model.id)
     db_session.add(embedding)
     db_session.commit()
     return embedding
@@ -75,7 +75,7 @@ def sample_embedding(db_session, sample_model):
 @pytest.fixture
 def sample_embedding2(db_session, sample_model):
     """Create a sample embedding for testing."""
-    embedding = Embedding(vector=np.random.rand(328), model_id=sample_model.id)
+    embedding = Embedding(vector=np.random.rand(1024), model_id=sample_model.id)
     db_session.add(embedding)
     db_session.commit()
     return embedding
@@ -112,41 +112,25 @@ def test_search_files(
     auth_header,
     sample_user,
     sample_model,
-    monkeypatch,
     sample_content,
     sample_content2,
 ):
     """Test the POST /search route."""
-
-    def mock_create_embedding(query_text):
-        return np.random.rand(328)
-
-    def mock_search(query_embedding):
-        return [
-            {"content_id": sample_content.id, "similarity_score": 0.95},
-            {"content_id": sample_content2.id, "similarity_score": 0.85},
-        ]
-
-    monkeypatch.setattr("smse_backend.services.create_embedding", mock_create_embedding)
-    monkeypatch.setattr("smse_backend.routes.search.search", mock_search)
-
     data = {"query": "sample query"}
     response = client.post("/api/search", headers=auth_header, json=data)
 
-    print(response.json["results"])
-
-    assert response.status_code == 201
+    assert response.status_code == 200
     assert response.json["message"] == "Search completed successfully"
     assert "query_id" in response.json
-    assert len(response.json["results"]) == 2
 
 
 def test_get_query_history(client, auth_header, sample_query):
     """Test the GET /queries route."""
     response = client.get("/api/search", headers=auth_header)
+    print(response.json)
     assert response.status_code == 200
-    assert len(response.json) == 1
-    assert response.json[0]["id"] == sample_query.id
+    assert len(response.json["queries"]) == 1
+    assert response.json["queries"][0]["id"] == sample_query.id
 
 
 def test_delete_query(client, auth_header, sample_query, db_session):

@@ -37,7 +37,7 @@ def sample_model(db_session):
 @pytest.fixture
 def sample_embedding(db_session, sample_model, sample_user):
     """Create a sample embedding for testing."""
-    embedding = Embedding(vector=np.random.rand(328), model_id=sample_model.id)
+    embedding = Embedding(vector=np.random.rand(1024), model_id=sample_model.id)
     db_session.add(embedding)
     db_session.commit()
     return embedding
@@ -51,7 +51,7 @@ def sample_content(db_session, sample_user, sample_embedding):
         content_tag=True,
         user_id=sample_user.id,
         embedding_id=sample_embedding.id,
-        content_size=1024,  
+        content_size=1024,
         upload_date=datetime.datetime(2023, 10, 1, 12, 0),
     )
     db_session.add(content)
@@ -59,16 +59,8 @@ def sample_content(db_session, sample_user, sample_embedding):
     return content
 
 
-def test_create_content(client, auth_header, sample_user, sample_model, monkeypatch):
+def test_create_content(client, auth_header, sample_user, sample_model):
     """Test the POST /contents route."""
-
-    def mock_create_embedding_from_path(file_path):
-        return np.random.rand(328)
-
-    monkeypatch.setattr(
-        "smse_backend.services.create_embedding_from_path",
-        mock_create_embedding_from_path,
-    )
 
     data = {"file": (BytesIO(b"file content"), "test.txt")}
     response = client.post(
@@ -80,6 +72,8 @@ def test_create_content(client, auth_header, sample_user, sample_model, monkeypa
 
     assert response.status_code == 201
     assert response.json["message"] == "Content created successfully"
+    assert "task_id" in response.json
+    assert response.json["task_id"] == "mocked-task-id-12345"  # Match the mock ID
 
 
 def test_get_all_contents(client, auth_header, sample_content):
