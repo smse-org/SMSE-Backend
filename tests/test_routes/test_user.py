@@ -82,3 +82,61 @@ def test_delete_user(client, auth_header, sample_user, db_session):
     assert response.status_code == 200
     assert response.json["message"] == "User deleted successfully"
     assert db_session.get(User, sample_user.id) is None
+
+
+def test_get_preferences_initially_empty(client, auth_header):
+    """Test GET /user/preferences returns empty dict initially."""
+    response = client.get("/api/user/preferences", headers=auth_header)
+    assert response.status_code == 200
+    assert response.json == {"preferences": {}}
+
+
+def test_update_preferences(client, auth_header):
+    """Test PUT /user/preferences updates user preferences."""
+    new_prefs = {"theme": "dark", "notifications": True}
+    response = client.put(
+        "/api/user/preferences",
+        headers=auth_header,
+        json=new_prefs,
+    )
+    assert response.status_code == 200
+    assert response.json["message"] == "Preferences updated"
+    assert response.json["preferences"] == new_prefs
+
+
+def test_update_preferences_merge(client, auth_header):
+    """Test PUT /user/preferences merges with existing preferences."""
+    initial_prefs = {"theme": "dark"}
+    updated_prefs = {"theme": "dark", "notifications": False}
+
+    # Set initial prefs
+    client.put("/api/user/preferences", headers=auth_header, json=initial_prefs)
+
+    # Merge new prefs
+    response = client.put("/api/user/preferences", headers=auth_header, json=updated_prefs)
+    assert response.status_code == 200
+    expected = {"theme": "dark", "notifications": False}
+    assert response.json["preferences"] == expected
+
+
+def test_update_preferences_no_data(client, auth_header): 
+    """Test PUT /user/preferences with no data returns 400.""" 
+    response = client.put("/api/user/preferences", headers=auth_header, json={}) 
+    assert response.status_code == 400 
+    assert response.json["message"] == "No data provided"
+
+
+def test_clear_preferences(client, auth_header):
+    """Test DELETE /user/preferences clears all preferences."""
+    # Set some preferences first
+    client.put("/api/user/preferences", headers=auth_header, json={"theme": "dark"})
+
+    # Now clear them
+    response = client.delete("/api/user/preferences", headers=auth_header)
+    assert response.status_code == 200
+    assert response.json["message"] == "All preferences cleared"
+
+    # Confirm preferences are cleared
+    get_response = client.get("/api/user/preferences", headers=auth_header)
+    assert get_response.status_code == 200
+    assert get_response.json["preferences"] == {}

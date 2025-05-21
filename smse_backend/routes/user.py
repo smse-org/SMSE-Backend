@@ -90,3 +90,49 @@ def delete_user():
     except Exception as _:
         db.session.rollback()
         return jsonify({"message": "Error deleting user"}), 500
+
+
+@user_bp.route("/user/preferences", methods=["GET"])
+@jwt_required()
+def get_preferences():
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)
+
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    return jsonify({"preferences": user.preferences or {}}), 200
+
+
+@user_bp.route("/user/preferences", methods=["PUT"])
+@jwt_required()
+def update_preferences():
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)
+
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"message": "No data provided"}), 400
+
+    # Merge or set preferences
+    if user.preferences is None:
+        user.preferences = {}
+    user.preferences = data
+
+    db.session.commit()
+    return jsonify({"message": "Preferences updated", "preferences": user.preferences}), 200
+
+@user_bp.route("/user/preferences", methods=["DELETE"])
+@jwt_required()
+def clear_preferences():
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    user.preferences = {}
+    db.session.commit()
+    return jsonify({"message": "All preferences cleared"}), 200
