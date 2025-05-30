@@ -1,5 +1,4 @@
-import os
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -9,6 +8,7 @@ from flask_jwt_extended import (
 )
 from smse_backend import db
 from smse_backend.models import User
+from smse_backend.services.file_storage import file_storage
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -40,9 +40,8 @@ def register():
     db.session.add(new_user)
     db.session.commit()
 
-    user_folder_path = os.path.join(
-    current_app.config["UPLOAD_FOLDER"], str(new_user.id))
-    os.makedirs(user_folder_path, exist_ok=True)
+    # Create user directory using file storage service
+    file_storage.create_user_directory(new_user.id)
 
     return jsonify({"msg": "User created successfully"}), 201
 

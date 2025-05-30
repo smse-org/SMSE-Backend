@@ -1,23 +1,12 @@
-from flask import Blueprint, request, jsonify, current_app, send_file
+from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from werkzeug.utils import secure_filename
 from smse_backend import db
 from smse_backend.models import Content
 from smse_backend.utils.file_extensions import is_allowed_file
-import os
-import uuid
+from smse_backend.services.file_storage import file_storage
 from mimetypes import guess_type
 
 content_bp = Blueprint("content", __name__)
-
-
-def get_first_directory(path):
-    parts = path.lstrip(os.sep).split(os.sep)  # Remove leading slashes & split
-    return parts[0] if parts else None  # Return first part if exists
-
-
-def get_full_path(file_path):
-    return os.path.join(current_app.config["UPLOAD_FOLDER"], file_path)
 
 
 @content_bp.route("/contents", methods=["POST"])
@@ -34,22 +23,12 @@ def create_content():
         return jsonify({"msg": "No selected file"}), 400
 
     if file and is_allowed_file(file.filename):
-        # Get size from in-memory stream BEFORE saving
-        file_stream = file.stream
-        file_stream.seek(0, os.SEEK_END)
-        file_size_bytes = file_stream.tell()  # size in bytes
-        file_stream.seek(0)  # reset stream for future use
-        file_size_kb = round(file_size_bytes / 1024, 2)
-
-        filename = secure_filename(file.filename)
-        unique_filename = f"{uuid.uuid4().hex}_{filename}"
-        file_path = os.path.join(str(current_user_id), unique_filename)
-        full_path = get_full_path(file_path)
-
-        os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        file.save(full_path)
-
         try:
+            # Use file storage service to save the file
+            file_path, file_size_kb = file_storage.save_uploaded_file(
+                file, current_user_id
+            )
+
             # Create new content record WITHOUT embedding
             new_content = Content(
                 content_path=file_path,
@@ -65,7 +44,9 @@ def create_content():
             from smse_backend.services.embedding import schedule_embedding_task
             from smse_backend.models.task import Task
 
-            task_id = schedule_embedding_task(get_full_path(file_path), new_content.id)
+            task_id = schedule_embedding_task(
+                file_storage.get_full_path(file_path), new_content.id
+            )
 
             # Create a new task record
             new_task = Task(
@@ -220,9 +201,9 @@ def delete_content(content_id):
         return jsonify({"message": "Content not found"}), 404
 
     try:
-        # Delete the actual file
-        if os.path.exists(get_full_path(content.content_path)):
-            os.remove(get_full_path(content.content_path))
+        # Delete the actual file using file storage service
+        if file_storage.file_exists(content.content_path):
+            file_storage.delete_file(content.content_path)
         else:
             print("The file does not exist")  # TODO: Log this
 
@@ -274,11 +255,14 @@ def download_content():
         file_path = content.content_path
 
     if file_path is not None:
-        if get_first_directory(file_path) != current_user_id:
-            print(get_first_directory(file_path), current_user_id)
+        if file_storage.get_first_directory(file_path) != current_user_id:
+            print(file_storage.get_first_directory(file_path), current_user_id)
             return jsonify({"message": "Unauthorized access"}), 403
 
-        if not os.path.exists(get_full_path(file_path)):
+        if not file_storage.file_exists(file_path):
             return jsonify({"message": "File not found"}), 404
 
-    return send_file(get_full_path(file_path), mimetype=guess_type(file_path)[0])
+    print(file_storage.get_full_path(file_path))
+    return send_file(
+        file_storage.get_full_path(file_path), mimetype=guess_type(file_path)[0]
+    )

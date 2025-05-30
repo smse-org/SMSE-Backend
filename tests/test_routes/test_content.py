@@ -1,4 +1,5 @@
 import datetime
+from mimetypes import guess_type
 from unittest.mock import MagicMock
 import numpy as np
 import pytest
@@ -132,7 +133,7 @@ def test_download_content_by_id(client, auth_header, sample_content, monkeypatch
 
     assert response.status_code == 200
     mock_send_file.assert_called_once_with(
-        sample_content.content_path, as_attachment=True
+        sample_content.content_path, mimetype=guess_type(sample_content.content_path)[0]
     )
     assert response.data.decode() == sample_content.content_path
 
@@ -154,7 +155,8 @@ def test_download_content_by_path(client, auth_header, sample_content, monkeypat
 
     assert response.status_code == 200
     mock_send_file.assert_called_once_with(
-        sample_content.content_path, as_attachment=True
+        sample_content.content_path,
+        mimetype=guess_type(sample_content.content_path)[0],
     )
     assert response.data.decode() == sample_content.content_path
 

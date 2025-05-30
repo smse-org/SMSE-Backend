@@ -1,21 +1,15 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from werkzeug.utils import secure_filename
-from sqlalchemy.sql import text
 import os
-import uuid
 
 from smse_backend import db
 from smse_backend.models import Query, SearchRecord, Embedding, Model, Content
 from smse_backend.services.search import search
 from smse_backend.services.embedding import generate_query_embedding
+from smse_backend.services.file_storage import file_storage
 from smse_backend.utils.file_extensions import EXTENSION_TO_MODALITY
 
 search_bp = Blueprint("search", __name__)
-
-
-def get_full_path(file_path):
-    return os.path.join(current_app.config["UPLOAD_FOLDER"], file_path)
 
 
 @search_bp.route("/search", methods=["POST"])
@@ -66,15 +60,8 @@ def search_files():
                 400,
             )
 
-        # Save the file temporarily
-        filename = secure_filename(file.filename)
-        unique_filename = f"{uuid.uuid4().hex}_query_{filename}"
-        file_path = os.path.join("queries", str(current_user_id), unique_filename)
-        full_path = get_full_path(file_path)
-
-        # Ensure directory exists
-        os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        file.save(full_path)
+        # Save the file temporarily using file storage service
+        file_path, full_path = file_storage.save_query_file(file, current_user_id)
 
         try:
             # Generate query embedding
@@ -85,10 +72,7 @@ def search_files():
             query_content = file.filename
         except Exception as e:
             # Clean up the file in case of error
-            try:
-                os.remove(full_path)
-            except Exception as e:
-                current_app.logger.error(f"Failed to remove temporary file: {str(e)}")
+            file_storage.delete_file(file_path)
             current_app.logger.error(f"Error processing query file: {str(e)}")
             return jsonify({"message": f"Error processing file: {str(e)}"}), 500
 
