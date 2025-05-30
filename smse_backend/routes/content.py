@@ -340,3 +340,4 @@ def get_content_thumbnail(content_id):
 
     except Exception as e:
         return jsonify({"message": "Internal server error"}), 500
+    
