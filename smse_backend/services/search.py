@@ -6,6 +6,25 @@ import math
 from typing import Dict, List
 
 
+modality_thresholds = {
+    "text": {
+        "text": 0.65,
+        "image": 0.2,
+        "audio": 0.2,
+    },
+    "image": {
+        "text": 0.2,
+        "image": 0.5,
+        "audio": 0.15,
+    },
+    "audio": {
+        "text": 0.1,  # could be even lower like 0.09
+        "image": 0.1,
+        "audio": 0.5,
+    },
+}
+
+
 def softmax(scores: List[float]) -> List[float]:
     """
     Apply softmax normalization to a list of similarity scores.
@@ -56,7 +75,7 @@ def min_max_normalize(scores: List[float]) -> List[float]:
 
 
 def search_by_modality(
-    query_embedding: np.ndarray, modality: str, limit: int = 30
+    query_embedding: np.ndarray, user_id: int, modality: str, limit: int = 30
 ) -> List[Dict]:
     """
     Search for content files of a specific modality based on query embedding.
@@ -79,18 +98,21 @@ def search_by_modality(
             f"""
             SELECT 
                 c.id as content_id,
-                (e.vector <#> '[{embedding_str}]') * -1 AS similarity_score
+                1-(e.vector <=> '[{embedding_str}]') AS similarity_score
             FROM contents c
             JOIN embeddings e ON c.embedding_id = e.id
-            WHERE e.vector IS NOT NULL
+            WHERE c.user_id = :user_id
+              AND e.vector IS NOT NULL
               AND e.modality = :modality
-            ORDER BY e.vector <#> '[{embedding_str}]' ASC
+            ORDER BY 1-(e.vector <=> '[{embedding_str}]') ASC
             LIMIT :limit
             """
         )
 
         # Execute the query
-        result = db.session.execute(sql, {"modality": modality, "limit": limit})
+        result = db.session.execute(
+            sql, {"user_id": user_id, "modality": modality, "limit": limit}
+        )
 
         # Process results
         search_results = []
@@ -112,8 +134,10 @@ def search_by_modality(
 
 def search(
     query_embedding: np.ndarray,
+    query_modality: str,
+    user_id: int,
     limit: int = 10,
-    modalities: List[str] = ["text", "image", "audio"],
+    search_modalities: List[str] = ["text", "image", "audio"],
 ) -> List[Dict]:
     """
     Search for content files across all modalities based on a query embedding.
@@ -129,28 +153,49 @@ def search(
         # Search each modality
         all_results = []
 
-        for modality in modalities:
+        for modality in search_modalities:
+
+            if modality not in ["text", "image", "audio"]:
+                current_app.logger.warning(
+                    f"Unsupported modality: {modality}. Skipping search."
+                )
+                continue
+
             modality_results = search_by_modality(
                 query_embedding=query_embedding,
+                user_id=user_id,
                 modality=modality,
                 limit=limit,
             )
+
+            filtered_results = []
+
+            for index, result in enumerate(modality_results):
+                print(
+                    result["similarity_score"],
+                    modality_thresholds[query_modality][modality],
+                    index,
+                )
+                if (
+                    not result["similarity_score"]
+                    < modality_thresholds[query_modality][modality]
+                ):
+                    filtered_results.append(result)
 
             # Skip empty results
             if not modality_results:
                 continue
 
-            # Keep track of scores for normalization within this modality
-            scores = [result["similarity_score"] for result in modality_results]
+            scores = [result["similarity_score"] for result in filtered_results]
 
             # Normalize scores using softmax - keeps scores relative within the same modality
-            normalized_scores = softmax(scores)
+            normalized_scores = scores  # min_max_normalize(scores)
 
             # Update results with normalized scores
-            for i, result in enumerate(modality_results):
+            for i, result in enumerate(filtered_results):
                 result["normalized_score"] = normalized_scores[i]
 
-            all_results.extend(modality_results)
+            all_results.extend(filtered_results)
 
         # Sort by normalized score (descending)
         all_results.sort(key=lambda x: x["normalized_score"], reverse=True)

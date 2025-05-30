@@ -1,0 +1,10 @@
+.env
+.venv
+instance
+tmp
+
+__pycache__/
+*.py[cod]
+.checkpoints
+.assets
+.logs

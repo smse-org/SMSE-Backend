@@ -46,6 +46,11 @@ services:
     volumes:
       - ./tmp:/app/tmp
       - ./.checkpoints:/app/.checkpoints
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./smse_backend
+          target: /app/smse_backend
 
   worker:
     image: smse-backend:latest

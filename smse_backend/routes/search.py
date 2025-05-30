@@ -121,7 +121,13 @@ def search_files():
         db.session.commit()
 
         # Perform the search using the embedding with pagination
-        search_results = search(query_embedding, limit=limit, modalities=modalities)
+        search_results = search(
+            query_embedding,
+            query_modality,
+            current_user_id,
+            limit=limit,
+            search_modalities=modalities,
+        )
 
         # Store search results
         for result in search_results:
