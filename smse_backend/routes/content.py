@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app, send_file
+from flask import Blueprint, request, jsonify, current_app, send_file, Flask, abort
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from smse_backend import db
@@ -7,6 +7,10 @@ from smse_backend.utils.file_extensions import is_allowed_file
 import os
 import uuid
 from mimetypes import guess_type
+from PIL import Image, ImageDraw, ImageFont
+from pdf2image import convert_from_path
+import markdown
+
 
 content_bp = Blueprint("content", __name__)
 
@@ -282,3 +286,57 @@ def download_content():
             return jsonify({"message": "File not found"}), 404
 
     return send_file(get_full_path(file_path), mimetype=guess_type(file_path)[0])
+
+
+@content_bp.route("/contents/<int:content_id>/thumbnail", methods=["GET"])
+@jwt_required()
+def get_content_thumbnail(content_id):
+    current_user_id = get_jwt_identity()
+
+    content = Content.query.filter_by(id=content_id, user_id=current_user_id).first()
+    if not content:
+        return jsonify({"message": "Content not found"}), 404
+
+    file_path = get_full_path(content.content_path)
+    filename = os.path.basename(file_path)
+    ext = filename.rsplit('.', 1)[1].lower()
+    thumbnail_folder = current_app.config.get("THUMBNAIL_FOLDER", "thumbnails")
+    os.makedirs(thumbnail_folder, exist_ok=True)
+    thumb_path = os.path.join(thumbnail_folder, f"{filename}.thumb.jpg")
+
+    try:
+
+        # If already exists, return it
+        if os.path.exists(thumb_path):
+            return send_file(thumb_path, mimetype='image/jpeg')
+
+        # Generate based on type
+        if ext in {'png', 'jpg', 'jpeg', 'gif'}:
+            with Image.open(file_path) as img:
+                img.thumbnail((300, 300))
+                img.save(thumb_path)
+        elif ext == 'pdf':
+            pages = convert_from_path(file_path, first_page=1, last_page=1)
+            pages[0].thumbnail((300, 300))
+            pages[0].save(thumb_path)
+        elif ext in {'txt', 'md'}:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read(500)
+                if ext == 'md':
+                    content = markdown.markdown(content)
+
+                img = Image.new('RGB', (300, 300), color=(255, 255, 255))
+                d = ImageDraw.Draw(img)
+
+                try:
+                    font = ImageFont.truetype("arial.ttf", 12)
+                except:
+                    font = ImageFont.load_default()
+
+                d.text((10, 10), content[:800], fill=(0, 0, 0), font=font)
+                img.save(thumb_path)
+        else:
+            return jsonify({"message": "Unsupported file type for thumbnail"}), 400
+
+    except Exception as e:
+        return jsonify({"message": "Internal server error"}), 500
