@@ -6,6 +6,7 @@ from smse_backend.models import Content
 from smse_backend.utils.file_extensions import is_allowed_file
 import os
 import uuid
+from mimetypes import guess_type
 
 content_bp = Blueprint("content", __name__)
 
@@ -183,7 +184,9 @@ def update_content(content_id):
             content.content_size = data["content_size"]
 
         if "upload_date" in data:
-            content.upload_date = data["upload_date"]  # Ensure this is in the correct datetime format
+            content.upload_date = data[
+                "upload_date"
+            ]  # Ensure this is in the correct datetime format
 
         db.session.commit()
         return (
@@ -278,4 +281,4 @@ def download_content():
         if not os.path.exists(get_full_path(file_path)):
             return jsonify({"message": "File not found"}), 404
 
-    return send_file(get_full_path(file_path), as_attachment=True)
+    return send_file(get_full_path(file_path), mimetype=guess_type(file_path)[0])
