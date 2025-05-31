@@ -92,7 +92,10 @@ services:
           memory: 13G
 
   migrate:
-    image: smse-backend:latest
+    image: ghcr.io/smse-org/smse-backend-backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: flask db upgrade
     volumes:
       - ./migrations:/app/migrations
