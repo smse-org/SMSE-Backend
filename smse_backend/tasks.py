@@ -2,6 +2,8 @@
 This module contains Celery tasks for processing files with SMSE.
 """
 
+import tempfile
+import os
 from pathlib import Path
 from celery import shared_task
 
@@ -14,6 +16,7 @@ from smse.types import Modality
 
 from smse_backend.models import Content, Embedding, Model
 from smse_backend import db
+from smse_backend.services.file_storage import file_storage
 
 
 # Global variables to store models and pipelines
@@ -77,6 +80,72 @@ def _initialize_model():
         )
 
 
+def _download_file_for_processing(file_path):
+    """
+    Download a file from storage to a temporary location for processing.
+
+    Args:
+        file_path (str): Storage path/key of the file
+
+    Returns:
+        str: Path to the temporary local file
+    """
+    from smse_backend.services.file_storage import S3StorageBackend
+
+    # Check if we're using S3 storage
+    if isinstance(file_storage.backend, S3StorageBackend):
+        # For S3 storage, download the file to a temporary location
+        file_info = file_storage.get_file_info(file_path)
+        if not file_info:
+            raise FileNotFoundError(f"File not found in storage: {file_path}")
+
+        # Get file extension to preserve it in temp file
+        file_extension = os.path.splitext(file_path)[1]
+
+        # Create a temporary file with the same extension
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=file_extension
+        ) as temp_file:
+            temp_path = temp_file.name
+
+        # Download file from S3 to temporary location
+        try:
+            s3_client = file_storage.backend.s3_client
+            bucket_name = file_storage.backend.bucket_name
+            s3_client.download_file(bucket_name, file_path, temp_path)
+            return temp_path
+        except Exception as e:
+            # Clean up temp file if download failed
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+            raise e
+    else:
+        # For local storage, return the full path directly
+        return file_storage.get_full_path(file_path)
+
+
+def _cleanup_temp_file(temp_path, original_path):
+    """
+    Clean up temporary file if it was created for S3 storage.
+
+    Args:
+        temp_path (str): Path to temporary file
+        original_path (str): Original storage path
+    """
+    from smse_backend.services.file_storage import S3StorageBackend
+
+    # Only clean up if we're using S3 storage and the paths are different
+    if isinstance(
+        file_storage.backend, S3StorageBackend
+    ) and temp_path != file_storage.get_full_path(original_path):
+        try:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+        except Exception as e:
+            # Log the error but don't fail the task
+            print(f"Warning: Failed to clean up temporary file {temp_path}: {e}")
+
+
 def _get_smse_modality_for_file(file_path):
     """
     Determine the modality based on the file extension.
@@ -105,7 +174,7 @@ def _process_file(file_path, modality):
     Process a file based on its modality.
 
     Args:
-        file_path (str): Path to the file
+        file_path (str): Storage path of the file
         modality (Modality): The modality of the file
 
     Returns:
@@ -113,25 +182,33 @@ def _process_file(file_path, modality):
     """
     _initialize_model()
 
-    path = Path(file_path)
+    # Download file to local temporary location if needed
+    local_path = _download_file_for_processing(file_path)
 
-    if modality == Modality.IMAGE:
-        processed_input = _image_pipeline([path])
-    elif modality == Modality.AUDIO:
-        processed_input = _audio_pipeline([path])
-    elif modality == Modality.TEXT:
-        processed_input = _text_pipeline([path])
-    else:
-        raise ValueError(f"Unsupported modality: {modality}")
+    try:
+        path = Path(local_path)
 
-    # Create inputs dictionary with only the relevant modality
-    inputs = {modality: processed_input}
+        if modality == Modality.IMAGE:
+            processed_input = _image_pipeline([path])
+        elif modality == Modality.AUDIO:
+            processed_input = _audio_pipeline([path])
+        elif modality == Modality.TEXT:
+            processed_input = _text_pipeline([path])
+        else:
+            raise ValueError(f"Unsupported modality: {modality}")
 
-    # Get embeddings
-    embeddings = _model.encode(inputs)
+        # Create inputs dictionary with only the relevant modality
+        inputs = {modality: processed_input}
 
-    # Return the first embedding vector
-    return embeddings[modality][0].cpu().numpy()
+        # Get embeddings
+        embeddings = _model.encode(inputs)
+
+        # Return the first embedding vector
+        return embeddings[modality][0].cpu().numpy()
+
+    finally:
+        # Clean up temporary file if it was created
+        _cleanup_temp_file(local_path, file_path)
 
 
 def _process_text(text_content):
@@ -165,8 +242,7 @@ def process_file(self, file_path, content_id=None):
     Celery task to process a file with SMSE and create an embedding.
 
     Args:
-        file_path (str): Path to the file to process
-        user_id (int): ID of the user who uploaded the file
+        file_path (str): Storage path/key of the file to process
         content_id (int, optional): ID of the content if it already exists
 
     Returns:
@@ -261,7 +337,7 @@ def process_query(self, query_content, is_file=False, file_path=None):
     Args:
         query_content (str): The query text or file path
         is_file (bool): Whether the query is a file
-        file_path (str, optional): Path to the file if is_file is True
+        file_path (str, optional): Storage path of the file if is_file is True
 
     Returns:
         dict: Task result with the embedding vector
@@ -270,7 +346,7 @@ def process_query(self, query_content, is_file=False, file_path=None):
         if is_file:
             # Determine the modality based on file extension
             modality = _get_smse_modality_for_file(file_path)
-            # Process the file to get embedding vector
+            # Process the file to get embedding vector (handles download automatically)
             embedding_vector = _process_file(file_path, modality)
             modality_str = modality.name.lower()  # Convert enum to string
         else:

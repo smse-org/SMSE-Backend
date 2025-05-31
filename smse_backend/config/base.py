@@ -26,6 +26,17 @@ class BaseConfig:
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB max file size
     UPLOAD_FOLDER = "tmp/uploads"
 
+    # Storage configuration
+    STORAGE_TYPE = os.environ.get("STORAGE_TYPE", "local")  # 'local' or 's3'
+
+    # S3 configurations (used when STORAGE_TYPE='s3')
+    S3_BUCKET_NAME = os.environ.get("S3_BUCKET_NAME", "smse-files")
+    S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", "http://localhost:9000")
+    S3_ACCESS_KEY_ID = os.environ.get("S3_ACCESS_KEY_ID", "minioadmin")
+    S3_SECRET_KEY = os.environ.get("S3_SECRET_KEY", "minioadmin")
+    S3_REGION_NAME = os.environ.get("S3_REGION_NAME", "us-east-1")
+    S3_USE_SSL = os.environ.get("S3_USE_SSL", "false").lower() == "true"
+
     # Celery configurations
     CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
     CELERY_RESULT_BACKEND = os.environ.get(
