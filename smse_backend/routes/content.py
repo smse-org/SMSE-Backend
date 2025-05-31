@@ -5,6 +5,7 @@ from smse_backend.models import Content
 from smse_backend.utils.file_extensions import is_allowed_file
 from smse_backend.services.file_storage import file_storage
 from mimetypes import guess_type
+import io
 
 content_bp = Blueprint("content", __name__)
 
@@ -255,14 +256,19 @@ def download_content():
         file_path = content.content_path
 
     if file_path is not None:
-        if file_storage.get_first_directory(file_path) != current_user_id:
+        if file_storage.get_first_directory(file_path) != str(current_user_id):
             print(file_storage.get_first_directory(file_path), current_user_id)
             return jsonify({"message": "Unauthorized access"}), 403
 
         if not file_storage.file_exists(file_path):
             return jsonify({"message": "File not found"}), 404
 
-    print(file_storage.get_full_path(file_path))
-    return send_file(
-        file_storage.get_full_path(file_path), mimetype=guess_type(file_path)[0]
-    )
+    # Download file content
+    file_content = file_storage.download_file(file_path)
+    if file_content is None:
+        return jsonify({"message": "Error downloading file"}), 500
+
+    # Create a file-like object from the content
+    file_obj = io.BytesIO(file_content)
+
+    return send_file(file_obj, mimetype=guess_type(file_path)[0])

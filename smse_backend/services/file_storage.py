@@ -67,6 +67,11 @@ class StorageBackend(ABC):
         """Move a file within storage."""
         pass
 
+    @abstractmethod
+    def download_file(self, key: str) -> Optional[bytes]:
+        """Download a file and return its content as bytes."""
+        pass
+
 
 class LocalStorageBackend(StorageBackend):
     """Local filesystem storage backend."""
@@ -197,6 +202,19 @@ class LocalStorageBackend(StorageBackend):
                 f"Error moving file from {old_key} to {new_key}: {str(e)}"
             )
             return False
+
+    def download_file(self, key: str) -> Optional[bytes]:
+        """Download a file and return its content as bytes."""
+        try:
+            full_path = self._get_full_path(key)
+            if not os.path.exists(full_path):
+                return None
+            
+            with open(full_path, 'rb') as f:
+                return f.read()
+        except Exception as e:
+            current_app.logger.error(f"Error downloading file {key}: {str(e)}")
+            return None
 
 
 class S3StorageBackend(StorageBackend):
@@ -380,6 +398,23 @@ class S3StorageBackend(StorageBackend):
                 f"Error moving file from {old_key} to {new_key} in S3: {str(e)}"
             )
             return False
+
+    def download_file(self, key: str) -> Optional[bytes]:
+        """Download a file and return its content as bytes."""
+        try:
+            response = self.s3_client.get_object(Bucket=self.bucket_name, Key=key)
+            return response['Body'].read()
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            if error_code == 'NoSuchKey':
+                current_app.logger.info(f"File {key} not found in S3")
+                return None
+            else:
+                current_app.logger.error(f"Error downloading file {key} from S3: {str(e)}")
+                return None
+        except Exception as e:
+            current_app.logger.error(f"Error downloading file {key} from S3: {str(e)}")
+            return None
 
 
 class FileStorageService:
@@ -761,6 +796,18 @@ class FileStorageService:
         """
         parts = path.lstrip("/").split("/")
         return parts[0] if parts and parts[0] else None
+
+    def download_file(self, relative_path: str) -> Optional[bytes]:
+        """
+        Download a file and return its content as bytes.
+
+        Args:
+            relative_path: Path relative to the upload folder
+
+        Returns:
+            File content as bytes or None if file doesn't exist
+        """
+        return self.backend.download_file(relative_path)
 
 
 # Create a singleton instance
