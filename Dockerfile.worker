@@ -1,0 +1,61 @@
+# Worker image with SMSE dependencies
+FROM python:3.10-slim AS worker-base
+
+# Install system dependencies required for SMSE
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    libgl1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Install Poetry
+RUN pip install --no-cache-dir poetry
+
+# Configure poetry to not create a virtual environment
+RUN poetry config virtualenvs.create false
+
+# Copy dependency files
+COPY pyproject.toml poetry.lock ./
+
+# Install all dependencies including worker group (SMSE)
+RUN poetry install --no-root --with worker
+
+# Final worker stage
+FROM python:3.10-slim AS worker
+
+# Install runtime system dependencies required by SMSE
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    libgl1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy Python dependencies from worker-base stage
+COPY --from=worker-base /usr/local/lib/python3.10/site-packages/ /usr/local/lib/python3.10/site-packages/
+COPY --from=worker-base /usr/local/bin/ /usr/local/bin/
+
+# Copy the application code
+COPY smse_backend/ ./smse_backend/
+COPY swagger.json ./swagger.json
+
+# Create directories for uploads and checkpoints
+RUN mkdir -p ./tmp/uploads
+RUN mkdir -p ./.checkpoints
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Default command for worker
+CMD ["celery", "-A", "smse_backend.celery_worker.celery", "worker", "--loglevel=info", "--concurrency=1"]

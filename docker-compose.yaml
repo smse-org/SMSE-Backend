@@ -64,7 +64,6 @@ services:
       - .env
     volumes:
       - ./tmp:/app/tmp
-      - ./.checkpoints:/app/.checkpoints
     develop:
       watch:
         - action: sync+restart
@@ -72,7 +71,10 @@ services:
           target: /app/smse_backend
 
   worker:
-    image: smse-backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    image: smse-worker:latest
     restart: unless-stopped
     command: celery -A smse_backend.celery_worker.celery worker --loglevel=info --concurrency=1
     depends_on:

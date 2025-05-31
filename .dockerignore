@@ -1,10 +1,51 @@
+# Environment and virtual environment
 .env
 .venv
-instance
-tmp
 
+# Development files
+instance
+.vscode
+.idea
+*.log
+
+# Build and cache files
 __pycache__/
 *.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.Python
+.tox
+.coverage
+.coverage.*
+.cache
+.pytest_cache
+
+# Data directories
+tmp
 .checkpoints
 .assets
 .logs
+
+# Git
+.git
+.gitignore
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Documentation
+README.md
+STORAGE.md
+*.md
+
+# Docker files (not needed in build context)
+Dockerfile*
+docker-compose*.yml
+docker-compose*.yaml

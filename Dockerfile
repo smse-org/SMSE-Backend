@@ -22,19 +22,11 @@ RUN poetry config virtualenvs.create false
 # Copy dependency files
 COPY pyproject.toml poetry.lock ./
 
-# Install runtime dependencies only
-RUN poetry install --no-root
+# Install only the core dependencies (without worker group)
+RUN poetry install --no-root --without worker
 
 # Final stage
 FROM python:3.10-slim
-
-# Install system dependencies required by SMSE
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg \
-    libsm6 \
-    libxext6 \
-    libgl1 \
-    && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory in the container
 WORKDIR /app

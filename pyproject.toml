@@ -21,6 +21,8 @@ flask-swagger-ui = "^4.11.1"
 celery = "^5.3.6"
 redis = "^5.0.1"
 boto3 = "^1.34.0"
+
+[tool.poetry.group.worker.dependencies]
 smse = { git = "https://github.com/smse-org/smse.git", branch = "main", extras = ["all"] }
 
 

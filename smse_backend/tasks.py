@@ -7,12 +7,22 @@ import os
 from pathlib import Path
 from celery import shared_task
 
-from smse.device import get_device
-from smse.models import ImageBindModel
-from smse.pipelines.audio import AudioConfig, AudioPipeline
-from smse.pipelines.image import ImageConfig, ImagePipeline
-from smse.pipelines.text import TextConfig, TextPipeline
-from smse.types import Modality
+# Optional SMSE imports - only available in worker environment
+try:
+    from smse.device import get_device
+    from smse.models import ImageBindModel
+    from smse.pipelines.audio import AudioConfig, AudioPipeline
+    from smse.pipelines.image import ImageConfig, ImagePipeline
+    from smse.pipelines.text import TextConfig, TextPipeline
+    from smse.types import Modality
+    SMSE_AVAILABLE = True
+except ImportError:
+    SMSE_AVAILABLE = False
+    # Define dummy classes/functions for when SMSE is not available
+    class Modality:
+        TEXT = "text"
+        IMAGE = "image"
+        AUDIO = "audio"
 
 from smse_backend.models import Content, Embedding, Model
 from smse_backend import db
@@ -29,6 +39,9 @@ _text_pipeline = None
 def _initialize_model():
     """Initialize the SMSE model if it's not already initialized."""
     global _model, _image_pipeline, _audio_pipeline, _text_pipeline
+
+    if not SMSE_AVAILABLE:
+        raise RuntimeError("SMSE is not available in this environment. This task should only run in worker containers.")
 
     if _model is None:
         device = get_device()
@@ -67,8 +80,11 @@ def _initialize_model():
         )
 
         # Initialize text pipeline
-        from imagebind.data import return_bpe_path  # type: ignore[import]
-        from imagebind.models.multimodal_preprocessors import SimpleTokenizer  # type: ignore[import]
+        try:
+            from imagebind.data import return_bpe_path  # type: ignore[import]
+            from imagebind.models.multimodal_preprocessors import SimpleTokenizer  # type: ignore[import]
+        except ImportError:
+            raise RuntimeError("ImageBind dependencies are not available in this environment. This task should only run in worker containers.")
 
         _text_pipeline = TextPipeline(
             TextConfig(
@@ -248,6 +264,12 @@ def process_file(self, file_path, content_id=None):
     Returns:
         dict: Task result information
     """
+    if not SMSE_AVAILABLE:
+        return {
+            "status": "error",
+            "message": "SMSE framework is not available in this environment. This task should only run in worker containers.",
+        }
+    
     try:
         # Determine the modality based on file extension
         modality = _get_smse_modality_for_file(file_path)
@@ -342,6 +364,12 @@ def process_query(self, query_content, is_file=False, file_path=None):
     Returns:
         dict: Task result with the embedding vector
     """
+    if not SMSE_AVAILABLE:
+        return {
+            "status": "error",
+            "message": "SMSE framework is not available in this environment. This task should only run in worker containers.",
+        }
+    
     try:
         if is_file:
             # Determine the modality based on file extension
