@@ -52,7 +52,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: smse-backend:latest
+    image: ghcr.io/smse-org/smse-backend-backend:latest
     restart: unless-stopped
     ports:
       - "5000:5000"
@@ -74,7 +74,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.worker
-    image: smse-worker:latest
+    image: ghcr.io/smse-org/smse-backend-worker:latest
     restart: unless-stopped
     command: celery -A smse_backend.celery_worker.celery worker --loglevel=info --concurrency=1
     depends_on:
