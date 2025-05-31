@@ -58,8 +58,6 @@ jobs:
         push: true
         tags: ${{ steps.meta-backend.outputs.tags }}
         labels: ${{ steps.meta-backend.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
         platforms: linux/amd64
 
   build-worker:
@@ -112,8 +110,6 @@ jobs:
         push: true
         tags: ${{ steps.meta-worker.outputs.tags }}
         labels: ${{ steps.meta-worker.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
         platforms: linux/amd64
 
   output-summary:
