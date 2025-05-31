@@ -34,7 +34,7 @@ def generate_query_embedding(query_text: str = None, query_file: str = None):
     if query_text is not None:
         # Process text query with high priority
         task = process_query.apply_async(args=[query_text, False, None], priority=10)
-        result = task.get(timeout=30)  # Wait for completion with a timeout
+        result = task.get(timeout=80)  # Wait for completion with a timeout
 
         if result.get("status") == "success":
             return np.array(result.get("embedding")), result.get("modality", "text")
@@ -43,7 +43,7 @@ def generate_query_embedding(query_text: str = None, query_file: str = None):
     elif query_file is not None:
         # Process file query with high priority
         task = process_query.apply_async(args=[None, True, query_file], priority=10)
-        result = task.get(timeout=30)  # Wait for completion with a timeout
+        result = task.get(timeout=80)  # Wait for completion with a timeout
 
         if result.get("status") == "success":
             return np.array(result.get("embedding")), result.get("modality", "text")
