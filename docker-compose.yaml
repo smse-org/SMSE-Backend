@@ -77,10 +77,6 @@ services:
     image: ghcr.io/smse-org/smse-backend-worker:latest
     restart: unless-stopped
     command: celery -A smse_backend.celery_worker.celery worker --loglevel=info --concurrency=1
-    depends_on:
-      - db
-      - redis
-      - backend
     env_file:
       - .env
     volumes:
