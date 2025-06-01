@@ -1716,128 +1716,127 @@
             }
           }
         }
+      },
+      "delete": {
+        "summary": "Clear user preferences",
+        "description": "Clear all preferences for the authenticated user.",
+        "operationId": "clearUserPreferences",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All preferences cleared successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "All preferences cleared"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "User not found"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     },
-    "delete": {
-      "summary": "Clear user preferences",
-      "description": "Clear all preferences for the authenticated user.",
-      "operationId": "clearUserPreferences",
-      "tags": [
-        "Users"
-      ],
-      "security": [
-        {
-          "bearerAuth": []
-        }
-      ],
-      "responses": {
-        "200": {
-          "description": "All preferences cleared successfully",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "message": {
-                    "type": "string",
-                    "example": "All preferences cleared"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "404": {
-          "description": "User not found",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "message": {
-                    "type": "string",
-                    "example": "User not found"
-                  }
-                }
-              }
-            }
+    "schemas": {
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "task_id_123"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "in_progress",
+              "completed"
+            ]
+          },
+          "content_id": {
+            "type": "integer",
+            "example": 456
+          },
+          "assigned_to": {
+            "type": "string",
+            "example": "user_id_123"
+          },
+          "due_date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-03-03T12:34:56Z"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-03-01T12:34:56Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-03-02T12:34:56Z"
           }
         }
       }
     }
-  }
-},
-"components": {
-  "securitySchemes": {
-    "bearerAuth": {
-      "type": "http",
-      "scheme": "bearer",
-      "bearerFormat": "JWT"
+  },
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Endpoints related to user authentication"
+    },
+    {
+      "name": "Users",
+      "description": "Endpoints for user management"
+    },
+    {
+      "name": "Contents",
+      "description": "Endpoints for managing content files"
+    },
+    {
+      "name": "Search",
+      "description": "Endpoints for managing search queries"
+    },
+    {
+      "name": "Tasks",
+      "description": "Endpoints for managing tasks"
     }
-  },
-  "schemas": {
-    "Task": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "example": "task_id_123"
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "pending",
-            "in_progress",
-            "completed"
-          ]
-        },
-        "content_id": {
-          "type": "integer",
-          "example": 456
-        },
-        "assigned_to": {
-          "type": "string",
-          "example": "user_id_123"
-        },
-        "due_date": {
-          "type": "string",
-          "format": "date-time",
-          "example": "2025-03-03T12:34:56Z"
-        },
-        "created_at": {
-          "type": "string",
-          "format": "date-time",
-          "example": "2025-03-01T12:34:56Z"
-        },
-        "updated_at": {
-          "type": "string",
-          "format": "date-time",
-          "example": "2025-03-02T12:34:56Z"
-        }
-      }
-    }
-  }
-},
-"tags": [
-  {
-    "name": "Authentication",
-    "description": "Endpoints related to user authentication"
-  },
-  {
-    "name": "Users",
-    "description": "Endpoints for user management"
-  },
-  {
-    "name": "Contents",
-    "description": "Endpoints for managing content files"
-  },
-  {
-    "name": "Search",
-    "description": "Endpoints for managing search queries"
-  },
-  {
-    "name": "Tasks",
-    "description": "Endpoints for managing tasks"
-  }
-]
+  ]
 }
