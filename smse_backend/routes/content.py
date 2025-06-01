@@ -3,7 +3,6 @@ from flask import (
     request,
     jsonify,
     send_file,
-    send_from_directory,
     current_app,
 )
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -12,7 +11,6 @@ from smse_backend.models import Content
 from smse_backend.utils.file_extensions import is_allowed_file
 from mimetypes import guess_type
 import io
-import os
 
 content_bp = Blueprint("content", __name__)
 
@@ -37,6 +35,15 @@ def create_content():
                 file, current_user_id
             )
 
+            # Generate thumbnail if the file is an image
+            thumbnail_path = None
+            if current_app.thumbnail_service.is_supported_file(file_path):
+                thumbnail_path = (
+                    current_app.thumbnail_service.generate_and_save_thumbnail_from_path(
+                        file_path
+                    )
+                )
+
             # Create new content record WITHOUT embedding
             new_content = Content(
                 content_path=file_path,
@@ -44,6 +51,7 @@ def create_content():
                 user_id=current_user_id,
                 embedding=None,
                 content_size=file_size_kb,
+                thumbnail_path=thumbnail_path,
             )
             db.session.add(new_content)
             db.session.commit()
@@ -76,6 +84,11 @@ def create_content():
                             "content_tag": new_content.content_tag,
                             "content_size": new_content.content_size,
                             "upload_date": new_content.upload_date,
+                            "thumbnail_url": (
+                                f"/api/contents/thumbnail/{new_content.id}"
+                                if new_content.thumbnail_path
+                                else None
+                            ),
                         },
                         "task_id": task_id,
                     }
@@ -108,6 +121,11 @@ def get_all_contents():
                         "content_tag": content.content_tag,
                         "content_size": content.content_size,
                         "upload_date": content.upload_date,
+                        "thumbnail_url": (
+                            f"/api/contents/thumbnail/{content.id}"
+                            if content.thumbnail_path
+                            else None
+                        ),
                     }
                     for content in contents
                 ]
@@ -144,6 +162,11 @@ def get_content(content_id):
                     "content_tag": content.content_tag,
                     "content_size": content.content_size,
                     "upload_date": content.upload_date,
+                    "thumbnail_url": (
+                        f"/api/contents/thumbnail/{content.id}"
+                        if content.thumbnail_path
+                        else None
+                    ),
                 }
             }
         ),
@@ -188,6 +211,11 @@ def update_content(content_id):
                         "content_tag": content.content_tag,
                         "content_size": content.content_size,
                         "upload_date": content.upload_date,
+                        "thumbnail_url": (
+                            f"/api/contents/thumbnail/{content.id}"
+                            if content.thumbnail_path
+                            else None
+                        ),
                     },
                 }
             ),
@@ -214,6 +242,12 @@ def delete_content(content_id):
             current_app.file_storage.delete_file(content.content_path)
         else:
             print("The file does not exist")  # TODO: Log this
+
+        # Delete the thumbnail if it exists
+        if content.thumbnail_path and current_app.file_storage.file_exists(
+            content.thumbnail_path
+        ):
+            current_app.thumbnail_service.delete_thumbnail(content.thumbnail_path)
 
         # Delete the database record
         db.session.delete(content)
@@ -283,3 +317,54 @@ def download_content():
     file_obj = io.BytesIO(file_content)
 
     return send_file(file_obj, mimetype=guess_type(file_path)[0])
+
+
+@content_bp.route("/contents/thumbnail/<int:content_id>", methods=["GET"])
+@jwt_required()
+def get_thumbnail(content_id):
+    """
+    Serve a thumbnail for a specific content by its ID for the current user.
+
+    Args:
+        content_id (int): The ID of the content whose thumbnail to retrieve.
+
+    Returns:
+        Response: File response containing the thumbnail image or an error message.
+    """
+    current_user_id = get_jwt_identity()
+    content = Content.query.filter_by(id=content_id, user_id=current_user_id).first()
+
+    if not content:
+        return jsonify({"message": "Content not found"}), 404
+
+    if not content.thumbnail_path:
+        return jsonify({"message": "Thumbnail not available"}), 404
+
+    # Verify thumbnail file exists
+    if not current_app.file_storage.file_exists(content.thumbnail_path):
+        return jsonify({"message": "Thumbnail file not found"}), 404
+
+    try:
+        # Download thumbnail content
+        thumbnail_content = current_app.file_storage.download_file(
+            content.thumbnail_path
+        )
+        if thumbnail_content is None:
+            return jsonify({"message": "Error downloading thumbnail"}), 500
+
+        # Create a file-like object from the content
+        thumbnail_obj = io.BytesIO(thumbnail_content)
+
+        # Return thumbnail with appropriate MIME type
+        return send_file(
+            thumbnail_obj,
+            mimetype="image/jpeg",
+            as_attachment=False,
+            download_name=f"thumbnail_{content_id}.jpg",
+        )
+
+    except Exception as e:
+        current_app.logger.error(
+            f"Error serving thumbnail for content {content_id}: {e}"
+        )
+        return jsonify({"message": "Error serving thumbnail"}), 500

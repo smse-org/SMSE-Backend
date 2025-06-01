@@ -12,6 +12,7 @@ class Content(BaseModel):
     content_tag = Column(Boolean, default=True)
     upload_date = Column(DateTime, server_default=func.now(), nullable=False)
     content_size = Column(Integer, nullable=False)
+    thumbnail_path = Column(String(250), nullable=True)  # Path to thumbnail image
     user_id = Column(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),

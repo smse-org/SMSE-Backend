@@ -213,3 +213,110 @@ def test_download_content_non_existent_path(
 
     assert response.status_code == 404
     assert response.json["message"] == "File not found"
+
+
+def test_upload_image_with_thumbnail_generation(
+    client, auth_header, sample_user, monkeypatch
+):
+    """Test uploading an image file and verifying thumbnail generation."""
+    # Create a simple 1x1 pixel JPEG image in memory
+    from PIL import Image
+    import io
+
+    # Create a simple test image
+    img = Image.new("RGB", (100, 100), color="red")
+    img_buffer = io.BytesIO()
+    img.save(img_buffer, format="JPEG")
+    img_buffer.seek(0)
+
+    # Mock file storage operations
+    mock_file_storage = MagicMock()
+    mock_file_storage.save_uploaded_file.return_value = (
+        f"{sample_user.id}/test_image.jpg",
+        5.0,
+    )
+
+    # Mock thumbnail service
+    mock_thumbnail_service = MagicMock()
+    mock_thumbnail_service.is_supported_file.return_value = True
+    mock_thumbnail_service.generate_and_save_thumbnail.return_value = (
+        f"{sample_user.id}/test_image_thumb.jpg"
+    )
+
+    # Mock the embedding service
+    mock_schedule_embedding_task = MagicMock(return_value="task_123")
+
+    monkeypatch.setattr("flask.current_app.file_storage", mock_file_storage)
+    monkeypatch.setattr("flask.current_app.thumbnail_service", mock_thumbnail_service)
+    monkeypatch.setattr(
+        "smse_backend.routes.content.schedule_embedding_task",
+        mock_schedule_embedding_task,
+    )
+
+    # Upload the image file
+    response = client.post(
+        "/api/contents",
+        data={"file": (img_buffer, "test_image.jpg")},
+        headers=auth_header,
+        content_type="multipart/form-data",
+    )
+
+    assert response.status_code == 201
+    data = response.json
+
+    # Verify response includes thumbnail URL
+    assert "content" in data
+    assert "thumbnail_url" in data["content"]
+    assert data["content"]["thumbnail_url"] is not None
+    assert "/api/contents/thumbnail/" in data["content"]["thumbnail_url"]
+
+    # Verify thumbnail service was called
+    mock_thumbnail_service.is_supported_file.assert_called_once()
+    mock_thumbnail_service.generate_and_save_thumbnail.assert_called_once()
+
+
+def test_get_thumbnail_success(client, auth_header, sample_content, monkeypatch):
+    """Test successfully retrieving a thumbnail."""
+    # Update the sample content to have a thumbnail path
+    sample_content.thumbnail_path = f"{sample_content.user_id}/test_thumb.jpg"
+
+    # Create mock thumbnail data
+    thumbnail_data = b"fake_thumbnail_jpeg_data"
+
+    # Mock file storage operations
+    mock_file_storage = MagicMock()
+    mock_file_storage.file_exists.return_value = True
+    mock_file_storage.download_file.return_value = thumbnail_data
+
+    monkeypatch.setattr("flask.current_app.file_storage", mock_file_storage)
+
+    response = client.get(
+        f"/api/contents/thumbnail/{sample_content.id}",
+        headers=auth_header,
+    )
+
+    assert response.status_code == 200
+    assert response.data == thumbnail_data
+    assert response.content_type == "image/jpeg"
+
+
+def test_get_thumbnail_not_found(client, auth_header, sample_content):
+    """Test retrieving thumbnail for content without thumbnail."""
+    response = client.get(
+        f"/api/contents/thumbnail/{sample_content.id}",
+        headers=auth_header,
+    )
+
+    assert response.status_code == 404
+    assert response.json["message"] == "Thumbnail not available"
+
+
+def test_get_thumbnail_content_not_found(client, auth_header):
+    """Test retrieving thumbnail for non-existent content."""
+    response = client.get(
+        "/api/contents/thumbnail/999",
+        headers=auth_header,
+    )
+
+    assert response.status_code == 404
+    assert response.json["message"] == "Content not found"

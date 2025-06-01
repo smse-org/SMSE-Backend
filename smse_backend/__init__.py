@@ -50,8 +50,10 @@ def create_app(config_name="DevelopmentConfig"):
 
     # Initialize file storage service
     from smse_backend.services.file_storage import FileStorageService
+    from smse_backend.services.thumbnail import ThumbnailService
 
     app.file_storage = FileStorageService()
+    app.thumbnail_service = ThumbnailService(app.file_storage)
 
     # Register blueprints
     from smse_backend.routes import register_blueprints
