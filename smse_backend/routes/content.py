@@ -320,7 +320,6 @@ def download_content():
 
 
 @content_bp.route("/contents/thumbnail/<int:content_id>", methods=["GET"])
-@jwt_required()
 def get_thumbnail(content_id):
     """
     Serve a thumbnail for a specific content by its ID for the current user.
@@ -331,8 +330,7 @@ def get_thumbnail(content_id):
     Returns:
         Response: File response containing the thumbnail image or an error message.
     """
-    current_user_id = get_jwt_identity()
-    content = Content.query.filter_by(id=content_id, user_id=current_user_id).first()
+    content = Content.query.filter_by(id=content_id).first()
 
     if not content:
         return jsonify({"message": "Content not found"}), 404
