@@ -6,7 +6,6 @@ from smse_backend import db
 from smse_backend.models import Query, SearchRecord, Embedding, Model, Content
 from smse_backend.services.search import search
 from smse_backend.services.embedding import generate_query_embedding
-from smse_backend.services.file_storage import file_storage
 from smse_backend.utils.file_extensions import EXTENSION_TO_MODALITY
 
 search_bp = Blueprint("search", __name__)
@@ -61,7 +60,9 @@ def search_files():
             )
 
         # Save the file temporarily using file storage service
-        file_path, full_path = file_storage.save_query_file(file, current_user_id)
+        file_path, full_path = current_app.file_storage.save_query_file(
+            file, current_user_id
+        )
 
         try:
             # Generate query embedding
@@ -72,7 +73,7 @@ def search_files():
             query_content = file.filename
         except Exception as e:
             # Clean up the file in case of error
-            file_storage.delete_file(file_path)
+            current_app.file_storage.delete_file(file_path)
             current_app.logger.error(f"Error processing query file: {str(e)}")
             return jsonify({"message": f"Error processing file: {str(e)}"}), 500
 

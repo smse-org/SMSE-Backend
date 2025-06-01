@@ -48,6 +48,11 @@ def create_app(config_name="DevelopmentConfig"):
     bcrypt.init_app(app)
     jwt.init_app(app)
 
+    # Initialize file storage service
+    from smse_backend.services.file_storage import FileStorageService
+
+    app.file_storage = FileStorageService()
+
     # Register blueprints
     from smse_backend.routes import register_blueprints
 

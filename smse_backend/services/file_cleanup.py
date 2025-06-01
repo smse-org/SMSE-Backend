@@ -1,6 +1,5 @@
 from datetime import timedelta
 from flask import current_app
-from smse_backend.services.file_storage import file_storage
 
 
 def schedule_cleanup_job():
@@ -13,7 +12,7 @@ def schedule_cleanup_job():
     @celery_app.task(name="cleanup_temp_files")
     def cleanup_task():
         with current_app.app_context():
-            files_deleted = file_storage.cleanup_temp_query_files()
+            files_deleted = current_app.file_storage.cleanup_temp_query_files()
             current_app.logger.info(f"Cleaned up {files_deleted} temporary query files")
 
     # Schedule the task to run daily

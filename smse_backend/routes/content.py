@@ -1,11 +1,18 @@
-from flask import Blueprint, request, jsonify, send_file
+from flask import (
+    Blueprint,
+    request,
+    jsonify,
+    send_file,
+    send_from_directory,
+    current_app,
+)
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from smse_backend import db
 from smse_backend.models import Content
 from smse_backend.utils.file_extensions import is_allowed_file
-from smse_backend.services.file_storage import file_storage
 from mimetypes import guess_type
 import io
+import os
 
 content_bp = Blueprint("content", __name__)
 
@@ -26,7 +33,7 @@ def create_content():
     if file and is_allowed_file(file.filename):
         try:
             # Use file storage service to save the file
-            file_path, file_size_kb = file_storage.save_uploaded_file(
+            file_path, file_size_kb = current_app.file_storage.save_uploaded_file(
                 file, current_user_id
             )
 
@@ -46,7 +53,7 @@ def create_content():
             from smse_backend.models.task import Task
 
             task_id = schedule_embedding_task(
-                file_storage.get_full_path(file_path), new_content.id
+                current_app.file_storage.get_full_path(file_path), new_content.id
             )
 
             # Create a new task record
@@ -203,8 +210,8 @@ def delete_content(content_id):
 
     try:
         # Delete the actual file using file storage service
-        if file_storage.file_exists(content.content_path):
-            file_storage.delete_file(content.content_path)
+        if current_app.file_storage.file_exists(content.content_path):
+            current_app.file_storage.delete_file(content.content_path)
         else:
             print("The file does not exist")  # TODO: Log this
 
@@ -256,15 +263,19 @@ def download_content():
         file_path = content.content_path
 
     if file_path is not None:
-        if file_storage.get_first_directory(file_path) != str(current_user_id):
-            print(file_storage.get_first_directory(file_path), current_user_id)
+        if current_app.file_storage.get_first_directory(file_path) != str(
+            current_user_id
+        ):
+            print(
+                current_app.file_storage.get_first_directory(file_path), current_user_id
+            )
             return jsonify({"message": "Unauthorized access"}), 403
 
-        if not file_storage.file_exists(file_path):
+        if not current_app.file_storage.file_exists(file_path):
             return jsonify({"message": "File not found"}), 404
 
     # Download file content
-    file_content = file_storage.download_file(file_path)
+    file_content = current_app.file_storage.download_file(file_path)
     if file_content is None:
         return jsonify({"message": "Error downloading file"}), 500
 

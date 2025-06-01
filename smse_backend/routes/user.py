@@ -1,7 +1,6 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from smse_backend.models import User
-from smse_backend.services.file_storage import file_storage
 from smse_backend import db
 
 user_bp = Blueprint("user", __name__)
@@ -82,7 +81,7 @@ def delete_user():
         db.session.commit()
 
         # Delete user directory using file storage service
-        file_storage.delete_user_directory(user.id)
+        current_app.file_storage.delete_user_directory(user.id)
 
         return jsonify({"message": "User deleted successfully"}), 200
     except Exception as _:
@@ -121,7 +120,11 @@ def update_preferences():
     user.preferences = data
 
     db.session.commit()
-    return jsonify({"message": "Preferences updated", "preferences": user.preferences}), 200
+    return (
+        jsonify({"message": "Preferences updated", "preferences": user.preferences}),
+        200,
+    )
+
 
 @user_bp.route("/user/preferences", methods=["DELETE"])
 @jwt_required()

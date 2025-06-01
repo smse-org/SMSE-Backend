@@ -268,8 +268,7 @@ LOGGING = {
 
 You can test the storage backend with a simple script:
 ```python
-from smse_backend.services.file_storage import file_storage
-from flask import Flask
+from flask import Flask, current_app
 
 app = Flask(__name__)
 app.config.from_object('smse_backend.config.development.DevelopmentConfig')
@@ -277,7 +276,7 @@ app.config.from_object('smse_backend.config.development.DevelopmentConfig')
 with app.app_context():
     # Test file operations
     print(f"Storage type: {app.config.get('STORAGE_TYPE')}")
-    print(f"Backend: {type(file_storage.backend).__name__}")
+    print(f"Backend: {type(current_app.file_storage.backend).__name__}")
 ```
 
 ## Performance Considerations

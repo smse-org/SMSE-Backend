@@ -209,8 +209,8 @@ class LocalStorageBackend(StorageBackend):
             full_path = self._get_full_path(key)
             if not os.path.exists(full_path):
                 return None
-            
-            with open(full_path, 'rb') as f:
+
+            with open(full_path, "rb") as f:
                 return f.read()
         except Exception as e:
             current_app.logger.error(f"Error downloading file {key}: {str(e)}")
@@ -250,45 +250,57 @@ class S3StorageBackend(StorageBackend):
             current_app.logger.info(f"S3 bucket {self.bucket_name} already exists")
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
-            current_app.logger.info(f"Bucket check failed with error code: {error_code}")
-            
+            current_app.logger.info(
+                f"Bucket check failed with error code: {error_code}"
+            )
+
             # Handle both 404 (NoSuchBucket) and 403 (Forbidden) as bucket doesn't exist
             # MinIO can return 403 when bucket doesn't exist depending on configuration
             if error_code in ["404", "NoSuchBucket", "403", "Forbidden"]:
                 try:
-                    current_app.logger.info(f"Attempting to create bucket: {self.bucket_name}")
-                    
+                    current_app.logger.info(
+                        f"Attempting to create bucket: {self.bucket_name}"
+                    )
+
                     # Create bucket with proper configuration
-                    region = getattr(self.s3_client._client_config, 'region_name', 'us-east-1')
-                    if region == 'us-east-1':
+                    region = getattr(
+                        self.s3_client._client_config, "region_name", "us-east-1"
+                    )
+                    if region == "us-east-1":
                         # For us-east-1, don't specify location constraint
                         self.s3_client.create_bucket(Bucket=self.bucket_name)
                     else:
                         # For other regions, specify location constraint
                         self.s3_client.create_bucket(
                             Bucket=self.bucket_name,
-                            CreateBucketConfiguration={
-                                'LocationConstraint': region
-                            }
+                            CreateBucketConfiguration={"LocationConstraint": region},
                         )
-                    
-                    current_app.logger.info(f"Successfully created S3 bucket: {self.bucket_name}")
-                    
+
+                    current_app.logger.info(
+                        f"Successfully created S3 bucket: {self.bucket_name}"
+                    )
+
                     # Verify bucket was created by trying to access it again
                     try:
                         self.s3_client.head_bucket(Bucket=self.bucket_name)
-                        current_app.logger.info(f"Verified bucket {self.bucket_name} is accessible")
+                        current_app.logger.info(
+                            f"Verified bucket {self.bucket_name} is accessible"
+                        )
                     except ClientError as verify_error:
                         current_app.logger.warning(
                             f"Bucket created but verification failed: {str(verify_error)}"
                         )
-                        
+
                 except ClientError as create_error:
                     error_code = create_error.response["Error"]["Code"]
                     if error_code == "BucketAlreadyExists":
-                        current_app.logger.info(f"Bucket {self.bucket_name} already exists (race condition)")
+                        current_app.logger.info(
+                            f"Bucket {self.bucket_name} already exists (race condition)"
+                        )
                     elif error_code == "BucketAlreadyOwnedByYou":
-                        current_app.logger.info(f"Bucket {self.bucket_name} already owned by you")
+                        current_app.logger.info(
+                            f"Bucket {self.bucket_name} already owned by you"
+                        )
                     else:
                         current_app.logger.error(
                             f"Error creating bucket {self.bucket_name}: {str(create_error)}"
@@ -403,14 +415,16 @@ class S3StorageBackend(StorageBackend):
         """Download a file and return its content as bytes."""
         try:
             response = self.s3_client.get_object(Bucket=self.bucket_name, Key=key)
-            return response['Body'].read()
+            return response["Body"].read()
         except ClientError as e:
-            error_code = e.response['Error']['Code']
-            if error_code == 'NoSuchKey':
+            error_code = e.response["Error"]["Code"]
+            if error_code == "NoSuchKey":
                 current_app.logger.info(f"File {key} not found in S3")
                 return None
             else:
-                current_app.logger.error(f"Error downloading file {key} from S3: {str(e)}")
+                current_app.logger.error(
+                    f"Error downloading file {key} from S3: {str(e)}"
+                )
                 return None
         except Exception as e:
             current_app.logger.error(f"Error downloading file {key} from S3: {str(e)}")
@@ -808,7 +822,3 @@ class FileStorageService:
             File content as bytes or None if file doesn't exist
         """
         return self.backend.download_file(relative_path)
-
-
-# Create a singleton instance
-file_storage = FileStorageService()

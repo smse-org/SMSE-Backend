@@ -15,18 +15,21 @@ try:
     from smse.pipelines.image import ImageConfig, ImagePipeline
     from smse.pipelines.text import TextConfig, TextPipeline
     from smse.types import Modality
+
     SMSE_AVAILABLE = True
 except ImportError:
     SMSE_AVAILABLE = False
+
     # Define dummy classes/functions for when SMSE is not available
     class Modality:
         TEXT = "text"
         IMAGE = "image"
         AUDIO = "audio"
 
+
 from smse_backend.models import Content, Embedding, Model
 from smse_backend import db
-from smse_backend.services.file_storage import file_storage
+from flask import current_app
 
 
 # Global variables to store models and pipelines
@@ -41,7 +44,9 @@ def _initialize_model():
     global _model, _image_pipeline, _audio_pipeline, _text_pipeline
 
     if not SMSE_AVAILABLE:
-        raise RuntimeError("SMSE is not available in this environment. This task should only run in worker containers.")
+        raise RuntimeError(
+            "SMSE is not available in this environment. This task should only run in worker containers."
+        )
 
     if _model is None:
         device = get_device()
@@ -84,7 +89,9 @@ def _initialize_model():
             from imagebind.data import return_bpe_path  # type: ignore[import]
             from imagebind.models.multimodal_preprocessors import SimpleTokenizer  # type: ignore[import]
         except ImportError:
-            raise RuntimeError("ImageBind dependencies are not available in this environment. This task should only run in worker containers.")
+            raise RuntimeError(
+                "ImageBind dependencies are not available in this environment. This task should only run in worker containers."
+            )
 
         _text_pipeline = TextPipeline(
             TextConfig(
@@ -109,9 +116,9 @@ def _download_file_for_processing(file_path):
     from smse_backend.services.file_storage import S3StorageBackend
 
     # Check if we're using S3 storage
-    if isinstance(file_storage.backend, S3StorageBackend):
+    if isinstance(current_app.file_storage.backend, S3StorageBackend):
         # For S3 storage, download the file to a temporary location
-        file_info = file_storage.get_file_info(file_path)
+        file_info = current_app.file_storage.get_file_info(file_path)
         if not file_info:
             raise FileNotFoundError(f"File not found in storage: {file_path}")
 
@@ -126,8 +133,8 @@ def _download_file_for_processing(file_path):
 
         # Download file from S3 to temporary location
         try:
-            s3_client = file_storage.backend.s3_client
-            bucket_name = file_storage.backend.bucket_name
+            s3_client = current_app.file_storage.backend.s3_client
+            bucket_name = current_app.file_storage.backend.bucket_name
             s3_client.download_file(bucket_name, file_path, temp_path)
             return temp_path
         except Exception as e:
@@ -137,7 +144,7 @@ def _download_file_for_processing(file_path):
             raise e
     else:
         # For local storage, return the full path directly
-        return file_storage.get_full_path(file_path)
+        return current_app.file_storage.get_full_path(file_path)
 
 
 def _cleanup_temp_file(temp_path, original_path):
@@ -152,8 +159,8 @@ def _cleanup_temp_file(temp_path, original_path):
 
     # Only clean up if we're using S3 storage and the paths are different
     if isinstance(
-        file_storage.backend, S3StorageBackend
-    ) and temp_path != file_storage.get_full_path(original_path):
+        current_app.file_storage.backend, S3StorageBackend
+    ) and temp_path != current_app.file_storage.get_full_path(original_path):
         try:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
@@ -269,7 +276,7 @@ def process_file(self, file_path, content_id=None):
             "status": "error",
             "message": "SMSE framework is not available in this environment. This task should only run in worker containers.",
         }
-    
+
     try:
         # Determine the modality based on file extension
         modality = _get_smse_modality_for_file(file_path)
@@ -369,7 +376,7 @@ def process_query(self, query_content, is_file=False, file_path=None):
             "status": "error",
             "message": "SMSE framework is not available in this environment. This task should only run in worker containers.",
         }
-    
+
     try:
         if is_file:
             # Determine the modality based on file extension
