@@ -1047,11 +1047,24 @@
                   "properties": {
                     "message": {
                       "type": "string",
-                      "examples": [
-                        "Content not found",
-                        "Thumbnail not available",
-                        "Thumbnail file not found"
-                      ]
+                      "example": "Content not found"
+                    }
+                  }
+                },
+                "examples": {
+                  "content_not_found": {
+                    "value": {
+                      "message": "Content not found"
+                    }
+                  },
+                  "thumbnail_not_available": {
+                    "value": {
+                      "message": "Thumbnail not available"
+                    }
+                  },
+                  "thumbnail_file_not_found": {
+                    "value": {
+                      "message": "Thumbnail file not found"
                     }
                   }
                 }
@@ -1067,10 +1080,19 @@
                   "properties": {
                     "message": {
                       "type": "string",
-                      "examples": [
-                        "Error downloading thumbnail",
-                        "Error serving thumbnail"
-                      ]
+                      "example": "Error downloading thumbnail"
+                    }
+                  }
+                },
+                "examples": {
+                  "download_error": {
+                    "value": {
+                      "message": "Error downloading thumbnail"
+                    }
+                  },
+                  "serving_error": {
+                    "value": {
+                      "message": "Error serving thumbnail"
                     }
                   }
                 }
