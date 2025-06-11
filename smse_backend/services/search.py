@@ -9,7 +9,7 @@ from typing import Dict, List
 modality_thresholds = {
     "text": {
         "text": 0.31,
-        "image": 0.166,
+        "image": 0.2,
         "audio": 0.165,
     },
     "image": {
