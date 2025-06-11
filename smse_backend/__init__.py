@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
+from flask_cors import CORS
 from flask_swagger_ui import get_swaggerui_blueprint
 import os
 
@@ -38,6 +39,8 @@ def create_app(config_name="DevelopmentConfig"):
         config = ProductionConfig
 
     app.config.from_object(config)
+
+    CORS(app, origins=["https://smseai.me", "https://web.smseai.me"])
 
     # Ensure upload directory exists
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
