@@ -18,8 +18,8 @@ modality_thresholds = {
         "audio": 0.15,
     },
     "audio": {
-        "text": 0.1,  # could be even lower like 0.09
-        "image": 0.1,
+        "text": 0.165,  # could be even lower like 0.09
+        "image": 0.15,
         "audio": 0.5,
     },
 }

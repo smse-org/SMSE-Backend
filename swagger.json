@@ -1104,8 +1104,8 @@
     },
     "/api/search": {
       "post": {
-        "summary": "Search Files",
-        "description": "Search for files based on a query string or file upload. Supports multimodal search with filtering by modality.",
+        "summary": "Multipart Search Files",
+        "description": "Search for files using multipart queries. Supports text queries, single/multiple file uploads, or a combination of both. The system computes embeddings for each part and combines them using arithmetic mean for semantic similarity search.",
         "operationId": "searchFiles",
         "tags": [
           "Search"
@@ -1147,7 +1147,7 @@
           }
         ],
         "requestBody": {
-          "required": true,
+          "required": false,
           "content": {
             "application/json": {
               "schema": {
@@ -1155,23 +1155,58 @@
                 "properties": {
                   "query": {
                     "type": "string",
-                    "example": "example search text"
+                    "description": "Text query for semantic search",
+                    "example": "find images of cats"
                   }
                 },
-                "required": [
-                  "query"
-                ]
+                "additionalProperties": false
+              },
+              "examples": {
+                "textOnly": {
+                  "summary": "Text-only search",
+                  "value": {
+                    "query": "find images of cats"
+                  }
+                }
               }
             },
             "multipart/form-data": {
               "schema": {
                 "type": "object",
                 "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "Optional text query to combine with file uploads",
+                    "example": "find similar content"
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    },
+                    "description": "One or more files to search similar content for. Supports text, image, and audio files."
+                  },
                   "file": {
                     "type": "string",
                     "format": "binary",
-                    "description": "File to search similar content for"
+                    "description": "Single file upload (legacy support). Use 'files' for multiple files."
                   }
+                },
+                "additionalProperties": false
+              },
+              "examples": {
+                "singleFile": {
+                  "summary": "Single file search",
+                  "description": "Search using a single file"
+                },
+                "multipleFiles": {
+                  "summary": "Multiple files search", 
+                  "description": "Search using multiple files of different modalities"
+                },
+                "textAndFiles": {
+                  "summary": "Combined text and files search",
+                  "description": "Search using both text query and file uploads"
                 }
               }
             }
@@ -1197,9 +1232,36 @@
                       "type": "string",
                       "enum": [
                         "text",
-                        "file"
+                        "file", 
+                        "multipart"
                       ],
-                      "example": "text"
+                      "example": "multipart",
+                      "description": "Type of query: 'text' for text-only, 'file' for single file, 'multipart' for multiple parts"
+                    },
+                    "query_parts": {
+                      "type": "object",
+                      "properties": {
+                        "text": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "find similar content",
+                          "description": "Text part of the query if provided"
+                        },
+                        "files": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "nullable": true,
+                          "example": ["image1.jpg", "audio.mp3"],
+                          "description": "List of uploaded file names if provided"
+                        },
+                        "total_parts": {
+                          "type": "integer",
+                          "example": 3,
+                          "description": "Total number of query parts (text + files)"
+                        }
+                      }
                     },
                     "results": {
                       "type": "array",
@@ -1212,7 +1274,7 @@
                           },
                           "content_path": {
                             "type": "string",
-                            "example": "path/to/file.pdf"
+                            "example": "user123/uploads/document.pdf"
                           },
                           "content_tag": {
                             "type": "boolean",
@@ -1221,16 +1283,8 @@
                           "similarity_score": {
                             "type": "number",
                             "format": "float",
-                            "example": 0.89
-                          },
-                          "modality": {
-                            "type": "string",
-                            "enum": [
-                              "text",
-                              "image",
-                              "audio"
-                            ],
-                            "example": "text"
+                            "example": 0.8947,
+                            "description": "Cosine similarity score between query and content"
                           }
                         }
                       }
@@ -1245,12 +1299,62 @@
                       }
                     }
                   }
+                },
+                "examples": {
+                  "textSearch": {
+                    "summary": "Text-only search result",
+                    "value": {
+                      "message": "Search completed successfully",
+                      "query_id": 12345,
+                      "query_type": "text",
+                      "query_parts": {
+                        "text": "find images of cats",
+                        "files": null,
+                        "total_parts": 1
+                      },
+                      "results": [
+                        {
+                          "content_id": 101,
+                          "content_path": "user1/uploads/cat_image.jpg",
+                          "content_tag": true,
+                          "similarity_score": 0.92
+                        }
+                      ],
+                      "pagination": {
+                        "limit": 10
+                      }
+                    }
+                  },
+                  "multipartSearch": {
+                    "summary": "Multipart search result",
+                    "value": {
+                      "message": "Search completed successfully", 
+                      "query_id": 12346,
+                      "query_type": "multipart",
+                      "query_parts": {
+                        "text": "similar visual content",
+                        "files": ["reference.jpg", "audio_sample.wav"],
+                        "total_parts": 3
+                      },
+                      "results": [
+                        {
+                          "content_id": 202,
+                          "content_path": "user1/uploads/similar_image.png",
+                          "content_tag": true,
+                          "similarity_score": 0.87
+                        }
+                      ],
+                      "pagination": {
+                        "limit": 10
+                      }
+                    }
+                  }
                 }
               }
             }
           },
           "400": {
-            "description": "Bad request. Query text or file is required.",
+            "description": "Bad request. No valid query parts provided or unsupported file type.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1258,7 +1362,10 @@
                   "properties": {
                     "message": {
                       "type": "string",
-                      "example": "Either query text or file is required"
+                      "examples": [
+                        "No valid query parts provided. Either query text or files are required",
+                        "Unsupported file type '.xyz' in file 'test.xyz'. Allowed types: .txt, .pdf, .jpg, .png, .mp3, .wav"
+                      ]
                     }
                   }
                 }
@@ -1266,7 +1373,7 @@
             }
           },
           "500": {
-            "description": "Internal server error. Error creating embedding for query.",
+            "description": "Internal server error. Error processing query or creating embeddings.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1274,7 +1381,11 @@
                   "properties": {
                     "message": {
                       "type": "string",
-                      "example": "Error creating embedding for query"
+                      "examples": [
+                        "Error creating embedding for query",
+                        "Error processing query: SMSE service unavailable",
+                        "Error performing search: Database connection failed"
+                      ]
                     }
                   }
                 }

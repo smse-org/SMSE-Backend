@@ -5,7 +5,10 @@ import os
 from smse_backend import db
 from smse_backend.models import Query, SearchRecord, Embedding, Model, Content
 from smse_backend.services.search import search
-from smse_backend.services.embedding import generate_query_embedding
+from smse_backend.services.embedding import (
+    generate_query_embedding,
+    generate_multipart_embedding,
+)
 from smse_backend.utils.file_extensions import EXTENSION_TO_MODALITY
 
 search_bp = Blueprint("search", __name__)
@@ -23,65 +26,118 @@ def search_files():
     if not modalities:
         modalities = ["text", "image", "audio"]
 
-    # Check if it's a text query or a file upload
-    if request.is_json:
-        # Text-based query
-        data = request.json
-        query_text = data.get("query")
+    # Initialize variables for multi-part query
+    query_parts = []
+    query_embeddings = []
+    query_modalities = []
+    saved_files = []  # Track files for cleanup
+    query_content_parts = []
 
-        if not query_text:
-            return jsonify({"message": "Query text is required"}), 400
+    try:
+        # Handle text query (if present)
+        query_text = None
+        if request.is_json:
+            # Pure JSON request - text only
+            data = request.json
+            query_text = data.get("query")
+        elif request.form:
+            # Form data - might have text along with files
+            query_text = request.form.get("query")
 
-        # Generate query embedding
-        query_embedding, query_modality = generate_query_embedding(
-            query_text=query_text
+        if query_text and query_text.strip():
+            # Generate text embedding
+            text_embedding, text_modality = generate_query_embedding(
+                query_text=query_text
+            )
+            if text_embedding is not None:
+                query_embeddings.append(text_embedding)
+                query_modalities.append(text_modality)
+                query_parts.append("text")
+                query_content_parts.append(query_text)
+
+        # Handle file uploads (can be multiple)
+        files = request.files.getlist("files") or (
+            [request.files["file"]] if "file" in request.files else []
         )
-        query_type = "text"
-        query_content = query_text
 
-    elif "file" in request.files:
-        # File-based query
-        file = request.files["file"]
+        for file in files:
+            if file.filename == "":
+                continue  # Skip empty files
 
-        if file.filename == "":
-            return jsonify({"message": "No selected file"}), 400
+            # Validate file type by extension
+            file_ext = os.path.splitext(file.filename)[1].lower()
 
-        # Validate file type by extension
-        file_ext = os.path.splitext(file.filename)[1].lower()
+            if file_ext not in EXTENSION_TO_MODALITY:
+                # Clean up any previously saved files
+                for saved_file in saved_files:
+                    current_app.file_storage.delete_file(saved_file)
+                return (
+                    jsonify(
+                        {
+                            "message": f"Unsupported file type '{file_ext}' in file '{file.filename}'. Allowed types: {', '.join(EXTENSION_TO_MODALITY.keys())}"
+                        }
+                    ),
+                    400,
+                )
 
-        if file_ext not in EXTENSION_TO_MODALITY:
+            # Save the file temporarily using file storage service
+            file_path, full_path = current_app.file_storage.save_query_file(
+                file, current_user_id
+            )
+            saved_files.append(file_path)
+
+            try:
+                # Generate query embedding for this file
+                file_embedding, file_modality = generate_query_embedding(
+                    query_file=full_path
+                )
+                if file_embedding is not None:
+                    query_embeddings.append(file_embedding)
+                    query_modalities.append(file_modality)
+                    query_parts.append("file")
+                    query_content_parts.append(file.filename)
+            except Exception as e:
+                current_app.logger.error(
+                    f"Error processing query file {file.filename}: {str(e)}"
+                )
+                # Continue processing other files instead of failing completely
+                continue
+
+        # Check if we have at least one valid embedding
+        if not query_embeddings:
+            # Clean up any saved files
+            for saved_file in saved_files:
+                current_app.file_storage.delete_file(saved_file)
             return (
                 jsonify(
                     {
-                        "message": f"Unsupported file type. Allowed types: {', '.join(EXTENSION_TO_MODALITY.keys())}"
+                        "message": "No valid query parts provided. Either query text or files are required"
                     }
                 ),
                 400,
             )
 
-        # Save the file temporarily using file storage service
-        file_path, full_path = current_app.file_storage.save_query_file(
-            file, current_user_id
+        # Combine embeddings by taking the mean
+        query_embedding, query_modality = generate_multipart_embedding(
+            embeddings=query_embeddings, modalities=query_modalities
         )
 
-        try:
-            # Generate query embedding
-            query_embedding, query_modality = generate_query_embedding(
-                query_file=full_path
-            )
-            query_type = "file"
-            query_content = file.filename
-        except Exception as e:
-            # Clean up the file in case of error
-            current_app.file_storage.delete_file(file_path)
-            current_app.logger.error(f"Error processing query file: {str(e)}")
-            return jsonify({"message": f"Error processing file: {str(e)}"}), 500
+        # Create query description for storage
+        query_content = " + ".join(query_content_parts)
+        query_type = "multipart" if len(query_parts) > 1 else query_parts[0]
 
-    else:
-        return jsonify({"message": "Either query text or file is required"}), 400
+    except Exception as e:
+        # Clean up any saved files in case of error
+        for saved_file in saved_files:
+            current_app.file_storage.delete_file(saved_file)
+        current_app.logger.error(f"Error processing multipart query: {str(e)}")
+        return jsonify({"message": f"Error processing query: {str(e)}"}), 500
 
     # Check if embedding generation was successful
     if query_embedding is None:
+        # Clean up any saved files
+        for saved_file in saved_files:
+            current_app.file_storage.delete_file(saved_file)
         return jsonify({"message": "Error creating embedding for query"}), 500
 
     try:
@@ -104,6 +160,8 @@ def search_files():
         )
         db.session.add(new_query)
         db.session.commit()
+
+        print(query_modality, query_embedding)
 
         # Perform the search using the embedding with pagination
         search_results = search(
@@ -144,12 +202,25 @@ def search_files():
                     }
                 )
 
+        # Clean up temporary query files after successful search
+        for saved_file in saved_files:
+            current_app.file_storage.delete_file(saved_file)
+
         return (
             jsonify(
                 {
                     "message": "Search completed successfully",
                     "query_id": new_query.id,
                     "query_type": query_type,
+                    "query_parts": {
+                        "text": query_text if query_text else None,
+                        "files": (
+                            [f for f in query_content_parts if f != query_text]
+                            if len(query_content_parts) > 1
+                            else None
+                        ),
+                        "total_parts": len(query_parts),
+                    },
                     "results": detailed_results,
                     "pagination": {
                         "limit": limit,
@@ -161,6 +232,9 @@ def search_files():
 
     except Exception as e:
         db.session.rollback()
+        # Clean up temporary query files in case of error
+        for saved_file in saved_files:
+            current_app.file_storage.delete_file(saved_file)
         current_app.logger.error(f"Search error: {str(e)}")
         return jsonify({"message": f"Error performing search: {str(e)}"}), 500
 
