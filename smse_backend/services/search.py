@@ -8,9 +8,9 @@ from typing import Dict, List
 
 modality_thresholds = {
     "text": {
-        "text": 0.65,
-        "image": 0.2,
-        "audio": 0.2,
+        "text": 0.31,
+        "image": 0.166,
+        "audio": 0.165,
     },
     "image": {
         "text": 0.2,
@@ -104,7 +104,7 @@ def search_by_modality(
             WHERE c.user_id = :user_id
               AND e.vector IS NOT NULL
               AND e.modality = :modality
-            ORDER BY 1-(e.vector <=> '[{embedding_str}]') ASC
+            ORDER BY 1-(e.vector <=> '[{embedding_str}]') DESC
             LIMIT :limit
             """
         )
@@ -175,6 +175,7 @@ def search(
                     result["similarity_score"],
                     modality_thresholds[query_modality][modality],
                     index,
+                    result["content_id"],
                 )
                 if (
                     not result["similarity_score"]
