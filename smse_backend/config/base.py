@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 
 class BaseConfig:
@@ -45,3 +46,6 @@ class BaseConfig:
 
     # SMSE configurations
     SMSE_CHECKPOINTS_PATH = os.environ.get("SMSE_CHECKPOINTS_PATH", "./.checkpoints")
+
+    # JWT Configurations
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
